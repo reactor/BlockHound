@@ -1,0 +1,20 @@
+plugins {
+    id "java"
+}
+
+
+test {
+    dependsOn(tasks.getByPath(":native-agent:linkRelease"))
+    jvmArgs(
+            "-agentpath:${tasks.getByPath(":native-agent:linkRelease").outputs.files[1]}"
+    )
+
+    sourceCompatibility = targetCompatibility = 11
+}
+
+dependencies {
+    testCompile 'io.projectreactor:reactor-core:3.2.2.RELEASE'
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.assertj:assertj-core:3.11.1'
+}

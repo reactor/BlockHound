@@ -1,0 +1,36 @@
+plugins {
+    id 'cpp-library'
+}
+
+
+toolChains {
+    configureEach {
+        eachPlatform {
+            cppCompiler.withArguments { args ->
+                args << "-std=c++14"
+                args << "-Wno-everything"
+            }
+        }
+    }
+}
+
+library {
+    baseName = "BlockHound"
+    linkage = [Linkage.SHARED]
+}
+
+components.main.binaries.whenElementFinalized { binary ->
+    project.dependencies {
+        add(binary.includePathConfiguration.name, files("${org.gradle.internal.jvm.Jvm.current().javaHome}/include"))
+
+        if (targetPlatform.operatingSystem.macOsX) {
+            add(binary.includePathConfiguration.name, files("${org.gradle.internal.jvm.Jvm.current().javaHome}/include/darwin"))
+        } else if (targetPlatform.operatingSystem.linux) {
+            add(binary.includePathConfiguration.name, files("${org.gradle.internal.jvm.Jvm.current().javaHome}/include/linux"))
+        } else if (targetPlatform.operatingSystem.windows) {
+            add(binary.includePathConfiguration.name, files("${org.gradle.internal.jvm.Jvm.current().javaHome}/include/win32"))
+        } else {
+            throw new IllegalStateException("Unsupported OS ${targetPlatform.operatingSystem}");
+        }
+    }
+}
