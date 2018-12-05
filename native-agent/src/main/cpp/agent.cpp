@@ -15,6 +15,7 @@
  */
 #include "jvmti.h"
 
+#include <cstring>
 #include <map>
 #include <unordered_map>
 #include <set>
