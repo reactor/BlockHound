@@ -241,8 +241,9 @@ static void JNICALL callbackBreakpointEvent(jvmtiEnv *jvmti, JNIEnv *env, jthrea
     returnType(*wrapper)(JNIEnv*, jobject, ##parameters) = [](auto env, auto self, auto...params) { \
         if (isBlockingCall(jvmti)) { \
             reportBlockingCall(jvmti, env, COMBINE(methodId, __LINE__)); \
+            return (returnType) NULL; \
         } else { \
-            static const auto method = (returnType(*)(JNIEnv*, jobject, ...)) originalMethods[COMBINE(methodId, __LINE__)]; \
+            auto method = (decltype(wrapper)) originalMethods[COMBINE(methodId, __LINE__)]; \
             return method(env, self, params...); \
         } \
     }; \
