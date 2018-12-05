@@ -109,9 +109,9 @@ static void JNICALL callbackClassPrepareEvent(jvmtiEnv *jvmti, JNIEnv *env, jthr
             }
 
             BlockingStackElement el = {
-                    .declaringClassName = className,
-                    .methodName = methodName,
-                    .allowed = methodIterator++->second
+                    declaringClassName : className,
+                    methodName : methodName,
+                    allowed : methodIterator++->second
             };
             hooks[methodId] = el;
         }
@@ -247,9 +247,9 @@ static void JNICALL callbackBreakpointEvent(jvmtiEnv *jvmti, JNIEnv *env, jthrea
     replacements[methodId] = (void *) wrapper; \
     if (originalMethods.find(methodId) != originalMethods.end()) { \
         overrides.push_back({ \
-            .name = methodName, \
-            .signature = sig, \
-            .fnPtr = (void *) wrapper \
+            name : methodName, \
+            signature : sig, \
+            fnPtr : (void *) wrapper \
         }); \
     } \
 })
@@ -394,19 +394,19 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options, void *reserved) 
     }
 
     jvmtiCapabilities capabilities = {
-            .can_tag_objects = 1,
-            .can_generate_breakpoint_events = 1,
-            .can_generate_native_method_bind_events = 1,
+            can_tag_objects : 1,
+            can_generate_breakpoint_events : 1,
+            can_generate_native_method_bind_events : 1,
     };
     jvmti->AddCapabilities(&capabilities);
 
     jvmtiEventCallbacks eventCallbacks = {
-            .ThreadStart = &callbackThreadStartEvent,
-            .ClassPrepare = &callbackClassPrepareEvent,
-            .ClassLoad = &callbackClassPrepareEvent,
-            .Breakpoint = &callbackBreakpointEvent,
-            .VMInit = &callbackVMInitEvent,
-            .NativeMethodBind = &callbackNativeMethodBindEvent,
+            ThreadStart : &callbackThreadStartEvent,
+            ClassPrepare : &callbackClassPrepareEvent,
+            ClassLoad : &callbackClassPrepareEvent,
+            Breakpoint : &callbackBreakpointEvent,
+            VMInit : &callbackVMInitEvent,
+            NativeMethodBind : &callbackNativeMethodBindEvent,
     };
 
     jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_THREAD_START, (jthread) NULL);
