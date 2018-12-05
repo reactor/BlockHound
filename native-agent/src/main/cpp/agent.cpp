@@ -108,11 +108,10 @@ static void JNICALL callbackClassPrepareEvent(jvmtiEnv *jvmti, JNIEnv *env, jthr
                 continue;
             }
 
-            BlockingStackElement el = {
-                    declaringClassName : className,
-                    methodName : methodName,
-                    allowed : methodIterator++->second
-            };
+            BlockingStackElement el = {};
+            el.declaringClassName = className;
+            el.methodName = methodName;
+            el.allowed = methodIterator++->second;
             hooks[methodId] = el;
         }
         return;
@@ -230,27 +229,30 @@ static void JNICALL callbackBreakpointEvent(jvmtiEnv *jvmti, JNIEnv *env, jthrea
     }
 }
 
+#define COMBINE1(X,Y) X##Y  // helper macro
+#define COMBINE(X,Y) COMBINE1(X,Y)
+
 #define IIF(cond) IIF_ ## cond
 #define IIF_false(trueBranch, falseBranch) falseBranch
 #define IIF_true(trueBranch, falseBranch) trueBranch
 
 #define WRAP_METHOD(methodName, isStatic, sig, returnType, parameters...) ({ \
-    static const auto methodId = env->IIF(isStatic)(GetStaticMethodID, GetMethodID)(clazz, methodName, sig); \
+    static const auto COMBINE(methodId, __LINE__) = env->IIF(isStatic)(GetStaticMethodID, GetMethodID)(clazz, methodName, sig); \
     returnType(*wrapper)(JNIEnv*, jobject, ##parameters) = [](auto env, auto self, auto...params) { \
         if (isBlockingCall(jvmti)) { \
-            reportBlockingCall(jvmti, env, methodId); \
+            reportBlockingCall(jvmti, env, COMBINE(methodId, __LINE__)); \
         } else { \
-            static const auto method = (returnType(*)(JNIEnv*, jobject, ...)) originalMethods[methodId]; \
+            static const auto method = (returnType(*)(JNIEnv*, jobject, ...)) originalMethods[COMBINE(methodId, __LINE__)]; \
             return method(env, self, params...); \
         } \
     }; \
-    replacements[methodId] = (void *) wrapper; \
-    if (originalMethods.find(methodId) != originalMethods.end()) { \
-        overrides.push_back({ \
-            name : methodName, \
-            signature : sig, \
-            fnPtr : (void *) wrapper \
-        }); \
+    replacements[COMBINE(methodId, __LINE__)] = (void *) wrapper; \
+    if (originalMethods.find(COMBINE(methodId, __LINE__)) != originalMethods.end()) { \
+        JNINativeMethod override = {}; \
+        override.name = methodName; \
+        override.signature = sig; \
+        override.fnPtr = (void *) wrapper; \
+        overrides.push_back(override); \
     } \
 })
 
@@ -393,21 +395,19 @@ JNIEXPORT jint JNICALL Agent_OnLoad(JavaVM *jvm, char *options, void *reserved) 
         return result;
     }
 
-    jvmtiCapabilities capabilities = {
-            can_tag_objects : 1,
-            can_generate_breakpoint_events : 1,
-            can_generate_native_method_bind_events : 1,
-    };
+    jvmtiCapabilities capabilities = {};
+    capabilities.can_tag_objects = 1;
+    capabilities.can_generate_breakpoint_events = 1;
+    capabilities.can_generate_native_method_bind_events = 1;
     jvmti->AddCapabilities(&capabilities);
 
-    jvmtiEventCallbacks eventCallbacks = {
-            ThreadStart : &callbackThreadStartEvent,
-            ClassPrepare : &callbackClassPrepareEvent,
-            ClassLoad : &callbackClassPrepareEvent,
-            Breakpoint : &callbackBreakpointEvent,
-            VMInit : &callbackVMInitEvent,
-            NativeMethodBind : &callbackNativeMethodBindEvent,
-    };
+    jvmtiEventCallbacks eventCallbacks = {};
+    eventCallbacks.ThreadStart = &callbackThreadStartEvent;
+    eventCallbacks.ClassPrepare = &callbackClassPrepareEvent;
+    eventCallbacks.ClassLoad = &callbackClassPrepareEvent;
+    eventCallbacks.Breakpoint = &callbackBreakpointEvent;
+    eventCallbacks.VMInit = &callbackVMInitEvent;
+    eventCallbacks.NativeMethodBind = &callbackNativeMethodBindEvent;
 
     jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_THREAD_START, (jthread) NULL);
     jvmti->SetEventNotificationMode(JVMTI_ENABLE, JVMTI_EVENT_CLASS_PREPARE, (jthread) NULL);
