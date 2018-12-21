@@ -16,6 +16,8 @@
 #include "jni.h"
 #include "jvmti.h"
 
+#include <cstddef>
+#include <cstring>
 #include <unordered_map>
 
 struct BlockingStackElement {
