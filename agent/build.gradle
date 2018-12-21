@@ -1,0 +1,41 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '4.0.3'
+    id "java"
+}
+
+
+sourceCompatibility = targetCompatibility = 8
+
+shadowJar {
+    classifier = null
+
+    dependsOn(tasks.getByPath(":native-agent:linkRelease"))
+    from tasks.getByPath(":native-agent:linkRelease").outputs.files[1]
+
+    manifest {
+        attributes('Can-Retransform-Classes': 'true')
+        attributes('Can-Set-Native-Method-Prefix': 'true')
+        attributes('Can-Redefine-Classes': 'true')
+    }
+}
+
+project.tasks.build.dependsOn(shadowJar)
+
+task relocateShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation) {
+    target = tasks.shadowJar
+    prefix = "reactor.shaded"
+}
+
+tasks.shadowJar.dependsOn tasks.relocateShadowJar
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'net.bytebuddy:byte-buddy:1.9.6'
+    compile 'net.bytebuddy:byte-buddy-agent:1.9.6'
+
+    // TODO use ByteBuddy only
+    compile 'org.javassist:javassist:3.24.0-GA'
+}
