@@ -32,7 +32,7 @@ model {
                 cmakeExecutable project.file("toolchain/cmake")
                 executable project.file("toolchain/make")
 
-                switch (binary.targetPlatform.name) {
+                switch ((binary.targetPlatform.operatingSystem as OperatingSystem).name) {
                     case "osx":
                         cmakeArgs(
                                 '-DCMAKE_SYSTEM_NAME=Darwin',
