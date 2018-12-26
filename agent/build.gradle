@@ -8,13 +8,13 @@ sourceCompatibility = targetCompatibility = 8
 shadowJar {
     classifier = null
 
-    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundLinuxExecutable"))
+    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundLinuxSharedLibrary"))
     from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/linux/libBlockHound.so"
 
-    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundOsxExecutable"))
+    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundOsxSharedLibrary"))
     from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/osx/libBlockHound.dylib"
 
-    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundWindowsExecutable"))
+    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundWindowsSharedLibrary"))
     from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/windows/libBlockHound.dll"
 
     manifest {

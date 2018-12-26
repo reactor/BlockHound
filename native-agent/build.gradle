@@ -21,7 +21,7 @@ model {
     }
 
     components {
-        BlockHound(com.cisco.gradle.externalbuild.ExternalNativeExecutableSpec) {
+        BlockHound(com.cisco.gradle.externalbuild.ExternalNativeLibrarySpec) {
             targetPlatform "osx"
             targetPlatform "linux"
             targetPlatform "windows"
