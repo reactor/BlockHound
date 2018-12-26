@@ -1,9 +1,22 @@
-cmake_minimum_required(VERSION 3.3)
+cmake_minimum_required(VERSION 3.0)
+
 project(BlockHound)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 11)
 
-find_package(JNI)
-include_directories(${JNI_INCLUDE_DIRS})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-everything -std=c++11")
 
+include_directories(src/main/headers)
+if(WIN32)
+    include_directories(src/main/headers/win32)
+endif()
+if(APPLE)
+    include_directories(src/main/headers/darwin)
+endif()
+if(UNIX AND NOT APPLE)
+    include_directories(src/main/headers/linux)
+endif()
 set(SOURCE_FILES src/main/cpp/agent.cpp)
+
+add_library(BlockHound SHARED ${SOURCE_FILES})
+set_property(TARGET BlockHound PROPERTY NO_SONAME 1)

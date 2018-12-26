@@ -6,7 +6,7 @@ plugins {
 test {
     dependsOn(tasks.getByPath(":agent:shadowJar"))
 
-    sourceCompatibility = targetCompatibility = 11
+    sourceCompatibility = targetCompatibility = 10
 }
 
 dependencies {

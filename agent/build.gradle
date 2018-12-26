@@ -3,14 +3,19 @@ plugins {
     id "java"
 }
 
-
 sourceCompatibility = targetCompatibility = 8
 
 shadowJar {
     classifier = null
 
-    dependsOn(tasks.getByPath(":native-agent:linkRelease"))
-    from tasks.getByPath(":native-agent:linkRelease").outputs.files[1]
+    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundLinuxExecutable"))
+    from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/linux/libBlockHound.so"
+
+    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundOsxExecutable"))
+    from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/osx/libBlockHound.dylib"
+
+    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundWindowsExecutable"))
+    from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/windows/libBlockHound.dll"
 
     manifest {
         attributes('Can-Retransform-Classes': 'true')

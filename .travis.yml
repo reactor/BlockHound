@@ -1,8 +1,5 @@
-matrix:
-  include:
-    - os: osx
-    - os: linux
-      dist: xenial
+services:
+  - docker
 
 language: java
 jdk:

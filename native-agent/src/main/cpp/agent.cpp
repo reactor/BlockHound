@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "jni.h"
 #include "jvmti.h"
 
 #include <cstddef>
@@ -39,18 +38,18 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *) {
     capabilities.can_tag_objects = 1;
     jvmti->AddCapabilities(&capabilities);
 
-    return JNI_VERSION_1_6;
+    return JNI_VERSION_1_8;
 }
 
 extern "C" JNIEXPORT void JNICALL Java_reactor_BlockHoundRuntime_markMethod(JNIEnv *env, jobject, jclass clazz, jstring hookMethodName, jboolean allowed) {
-    auto hookMethodChars = env->GetStringUTFChars(hookMethodName, JNI_FALSE);
+    const char *hookMethodChars = env->GetStringUTFChars(hookMethodName, JNI_FALSE);
 
     jint methodCount;
     jmethodID *methodIds;
     jvmti->GetClassMethods(clazz, &methodCount, &methodIds);
 
     for (int i = 0; i < methodCount; i++) {
-        auto methodId = methodIds[i];
+        jmethodID methodId = methodIds[i];
 
         char *methodName;
         jvmti->GetMethodName(methodId, &methodName, NULL, NULL);
@@ -103,7 +102,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_reactor_BlockHoundRuntime_hook(JNIEnv
 
     bool allowed = true;
     for (int i = 1; i < frames_count; i++) {
-        auto methodId = frames[i].method;
+        jmethodID methodId = frames[i].method;
 
         jclass methodDeclaringClass;
         jvmti->GetMethodDeclaringClass(methodId, &methodDeclaringClass);
@@ -115,9 +114,9 @@ extern "C" JNIEXPORT jboolean JNICALL Java_reactor_BlockHoundRuntime_hook(JNIEnv
         char *sig, *gsig;
         jvmti->GetMethodName(methodId, &methodName, &sig, &gsig);
 
-        auto hookIterator = hooks.find(methodId);
+        std::unordered_map<jmethodID, BlockingStackElement>::iterator hookIterator = hooks.find(methodId);
         if (hookIterator != hooks.end()) {
-            auto hook = hookIterator++->second;
+            BlockingStackElement hook = hookIterator++->second;
             if (hook.allowed) {
                 return JNI_FALSE;
             } else {
