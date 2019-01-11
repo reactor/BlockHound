@@ -29,7 +29,8 @@ public class BlockHoundRuntime {
                 Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
             }
             System.load(tempFile.toAbsolutePath().toString());
-        } catch (Throwable e) {
+        }
+        catch (Throwable e) {
             e.printStackTrace();
             throw new RuntimeException(e);
         }

@@ -52,7 +52,6 @@ public class BlockHound {
             return;
         }
         catch (Throwable e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -191,7 +190,6 @@ public class BlockHound {
             initializedField.setBoolean(null, true);
         }
         catch (Throwable e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -286,7 +284,6 @@ public class BlockHound {
             }
             catch (Throwable e) {
                 e.printStackTrace();
-                System.exit(1);
             }
 
             return classfileBuffer;
