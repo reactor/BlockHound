@@ -1,6 +1,7 @@
 plugins {
     id 'com.github.johnrengelman.shadow' version '4.0.3'
     id "java"
+    id "maven-publish"
 }
 
 sourceCompatibility = targetCompatibility = 8
@@ -43,4 +44,15 @@ dependencies {
 
     // TODO use ByteBuddy only
     compile 'org.javassist:javassist:3.24.0-GA'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) { publication ->
+            artifacts.removeAll { it.classifier == null }
+            artifact project.tasks.shadowJar
+
+            artifactId 'blockhound'
+        }
+    }
 }

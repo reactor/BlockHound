@@ -1,5 +1,17 @@
-allprojects {
-  repositories {
-	jcenter()
-  }
+subprojects {
+    group = "io.projectreactor"
+
+    repositories {
+        jcenter()
+    }
+
+    plugins.withType(MavenPublishPlugin) {
+        project.publishing {
+            repositories {
+                maven {
+                    url = uri("$rootProject.buildDir/repo")
+                }
+            }
+        }
+    }
 }
