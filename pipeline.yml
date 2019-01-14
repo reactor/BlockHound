@@ -55,8 +55,9 @@ jobs:
           rm -rf ~/.gradle
           ln -s $PWD/.gradle ~/.gradle
           ./gradlew build publish -Pversion=0.0.1-SNAPSHOT
-          cp -a build/repo/. distribution-repository/
-          find distribution-repository
+          cp -a build/repo/. ../distribution-repository/
+          find ../distribution-repository
+
   - put: artifactory-repo
     params:
       repo: libs-snapshot-local
