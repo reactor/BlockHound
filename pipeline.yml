@@ -1,0 +1,66 @@
+# fly --target spring login --concourse-url https://ci.spring.io --team-name "spring-team"
+# fly --target spring set-pipeline --config pipeline.yml --pipeline BlockHound
+# fly --target spring trigger-job --job=BlockHound/build -w
+---
+resource_types:
+- name: artifactory-resource
+  type: docker-image
+  source:
+    repository: springio/artifactory-resource
+    tag: 0.0.6
+
+resources:
+- name: source
+  type: git
+  source:
+    uri: https://github.com/reactor/BlockHound.git
+    branch: master
+
+- name: artifactory-repo
+  type: artifactory-resource
+  source:
+    uri: "https://repo.spring.io"
+    username: {{artifactory-username}}
+    password: {{artifactory-password}}
+    build_name: BlockHound
+
+jobs:
+- name: build
+  serial: true
+  plan:
+  - get: source
+    trigger: true
+
+  - task: build
+    privileged: true
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: { repository: bsideup/concourse-build-env }
+      inputs:
+      - name: source
+      outputs:
+      - name: distribution-repository
+      caches:
+        - path: source/.gradle
+      run:
+        dir: source
+        path: bash
+        args:
+        - -exc
+        - |
+          source /docker-lib.sh
+          start_docker "3" "3" "" ""
+          rm -rf ~/.gradle
+          ln -s $PWD/.gradle ~/.gradle
+          ./gradlew build publish -Pversion=0.0.1-SNAPSHOT
+          cp -a build/repo/. distribution-repository/
+          find distribution-repository
+  - put: artifactory-repo
+    params:
+      repo: libs-snapshot-local
+      folder: distribution-repository
+      build_uri: "https://ci.spring.io/teams/${BUILD_TEAM_NAME}/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}"
+      build_number: "${BUILD_PIPELINE_NAME}-${BUILD_JOB_NAME}-${BUILD_NAME}"
+      disable_checksum_uploads: true

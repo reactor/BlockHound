@@ -6,8 +6,15 @@ build/
 *.ipr
 *.iws
 
+.settings/
+.project
+.classpath
+bin/
+
 .DS_Store
 
 .vscode/
 
 cmake-build-*/
+
+credentials.yml
