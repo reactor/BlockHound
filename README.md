@@ -1,6 +1,7 @@
 # BlockHound (experimental)
 
 [![Travis CI](https://travis-ci.org/reactor/BlockHound.svg?branch=master)](https://travis-ci.org/reactor/BlockHound)
+[![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/blockhound/maven-metadata.xml.svg)](https://repo.spring.io/snapshot/io/projectreactor/blockhound/)
 
 Java agent to detect blocking calls from Reactor's non-blocking threads.
 
@@ -8,6 +9,8 @@ Java agent to detect blocking calls from Reactor's non-blocking threads.
 BlockHound will transparently instrument the JVM classes and intercept blocking calls (e.g. IO) if they are performed from threads marked as "non-blocking operations only" (ie. threads implementing Reactor's `NonBlocking` marker interface, like those started by `Schedulers.parallel()`). If and when this happens (but remember, this should never happen!:stuck_out_tongue_winking_eye:), an error will be thrown. Here is an example:
 ```java
 // Example.java
+BlockHound.install();
+
 Mono.delay(Duration.ofSeconds(1))
     .doOnNext(it -> {
         try {
@@ -28,70 +31,28 @@ java.lang.Error: Blocking call! java.lang.Thread.sleep
 ```
 Note that it points to the exact place where the blocking call got triggered. In this example it was `Example.java:16`.
 
+## Getting it
 
-## Getting the binaries
-Currently there are no pre-built binaries and you have to build them for your platform with the following command:
+Download it from repo.spring.io or Maven Central repositories (stable releases only):
 
-    ./gradlew :native-agent:linkRelease
-
-It will compile and put the artifact to `native-agent/build/lib/main/release/` folder.
-
-## Adding to the project
-
-BlockHound works as a native JVM agent. Please refer to your build system's documentation to find out how to configure it. Here are some examples:
-
-### Gradle tests
 ```groovy
-test {
-    jvmArgs(
-        "-agentpath:/path/to/libBlockHound.{dylib,so,dll}"
-    )
-}
+    repositories {
+      maven { url 'http://repo.spring.io/snapshot' }
+    }
+
+    dependencies {
+      compile 'io.projectreactor:blockhound:$LATEST_SNAPSHOT'
+    }
+```
+Where `$LATEST_SNAPSHOT` is:  
+![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/blockhound/maven-metadata.xml.svg)
+
+BlockHound is a JVM agent. You need to "install" it before it starts detecting the issues:
+```java
+BlockHound.install();
 ```
 
-### Maven surefire tests
-```xml
-<plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-surefire-plugin</artifactId>
-    <configuration>
-        <argLine>
-        -agentpath:/path/to/libBlockHound.{dylib,so,dll}
-        </argLine>
-    </configuration>
-</plugin>
-```
-
-### Maven failsafe tests
-```xml
-<plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-failsafe-plugin</artifactId>
-    <configuration>
-        <argLine>-agentpath:/path/to/libBlockHound.{dylib,so,dll}</argLine>
-    </configuration>
-</plugin>
-```
-
-### Gradle Spring Boot application
-```groovy
-bootRun {
-   jvmArgs = ["-agentpath:/path/to/libBlockHound.{dylib,so,dll}"]
-}
-```
-
-### Maven Spring Boot application
-```xml
-    <plugin>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-maven-plugin</artifactId>
-    <configuration>
-        <jvmArguments>
-        -agentpath:/path/to/libBlockHound.{dylib,so,dll}
-        </jvmArguments>
-    </configuration>
-    </plugin>
-```
+The best place to put this line is before *any* code gets executed, e.g. `@BeforeClass`, or `static {}` block, or test listener. The method is idempotent, you can call it multiple times.
 
 -------------------------------------
 _Licensed under [Apache Software License 2.0](www.apache.org/licenses/LICENSE-2.0)_
