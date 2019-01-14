@@ -1,0 +1,58 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '4.0.3'
+    id "java"
+    id "maven-publish"
+}
+
+sourceCompatibility = targetCompatibility = 8
+
+shadowJar {
+    classifier = null
+
+    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundLinuxSharedLibrary"))
+    from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/linux/libBlockHound.so"
+
+    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundOsxSharedLibrary"))
+    from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/osx/libBlockHound.dylib"
+
+    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundWindowsSharedLibrary"))
+    from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/windows/libBlockHound.dll"
+
+    manifest {
+        attributes('Can-Retransform-Classes': 'true')
+        attributes('Can-Set-Native-Method-Prefix': 'true')
+        attributes('Can-Redefine-Classes': 'true')
+    }
+}
+
+project.tasks.build.dependsOn(shadowJar)
+
+task relocateShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation) {
+    target = tasks.shadowJar
+    prefix = "reactor.shaded"
+}
+
+tasks.shadowJar.dependsOn tasks.relocateShadowJar
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile 'net.bytebuddy:byte-buddy:1.9.6'
+    compile 'net.bytebuddy:byte-buddy-agent:1.9.6'
+
+    // TODO use ByteBuddy only
+    compile 'org.javassist:javassist:3.24.0-GA'
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) { publication ->
+            artifacts.removeAll { it.classifier == null }
+            artifact project.tasks.shadowJar
+
+            artifactId 'blockhound'
+        }
+    }
+}

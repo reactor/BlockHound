@@ -4,15 +4,13 @@ plugins {
 
 
 test {
-    dependsOn(tasks.getByPath(":native-agent:linkRelease"))
-    jvmArgs(
-            "-agentpath:${tasks.getByPath(":native-agent:linkRelease").outputs.files[1]}"
-    )
+    dependsOn(tasks.getByPath(":agent:shadowJar"))
 
-    sourceCompatibility = targetCompatibility = 11
+    sourceCompatibility = targetCompatibility = 10
 }
 
 dependencies {
+    testCompile project(path: ":agent", configuration: 'shadow')
     testCompile 'io.projectreactor:reactor-core:3.2.2.RELEASE'
 
     testCompile 'junit:junit:4.12'

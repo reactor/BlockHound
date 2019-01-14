@@ -19,6 +19,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+import reactor.BlockHound;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -30,12 +31,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class BlockHoundAgentFalseNegativesTest {
 
+    static {
+        BlockHound.install();
+    }
+
     @Rule
     public Timeout timeout = new Timeout(20, TimeUnit.SECONDS);
 
     @Test
     public void shouldNotReportClassLoader() throws Exception {
-        Thread.sleep(5000);
         ClassLoader classLoader = new ClassLoader() {
             @Override
             protected Class<?> loadClass(String name, boolean resolve) {
