@@ -36,13 +36,13 @@ Note that it points to the exact place where the blocking call got triggered. In
 Download it from repo.spring.io or Maven Central repositories (stable releases only):
 
 ```groovy
-    repositories {
-      maven { url 'http://repo.spring.io/snapshot' }
-    }
+repositories {
+  maven { url 'http://repo.spring.io/snapshot' }
+}
 
-    dependencies {
-      compile 'io.projectreactor:blockhound:$LATEST_SNAPSHOT'
-    }
+dependencies {
+  testCompile 'io.projectreactor:blockhound:$LATEST_SNAPSHOT'
+}
 ```
 Where `$LATEST_SNAPSHOT` is:  
 ![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/blockhound/maven-metadata.xml.svg)
