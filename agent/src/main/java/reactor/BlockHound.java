@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 Pivotal Software Inc, All Rights Reserved.
+ * Copyright (c) 2018-2019 Pivotal Software Inc, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package reactor;
 
 import javassist.*;
@@ -30,6 +31,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -44,20 +46,6 @@ public class BlockHound {
 
     private static final AtomicBoolean INITIALIZED = new AtomicBoolean(false);
 
-    private static void markMethod(String className, String methodName, boolean allowed) {
-        try {
-            Class<?> aClass = ClassLoader.getSystemClassLoader().getParent().loadClass(BlockHoundRuntime.class.getCanonicalName());
-            Method method = aClass.getMethod("markMethod", Class.class, String.class, boolean.class);
-            method.invoke(null, Class.forName(className), methodName, allowed);
-        }
-        catch (ClassNotFoundException __) {
-            return;
-        }
-        catch (Throwable e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     public static Builder builder() {
         return new Builder();
     }
@@ -71,7 +59,7 @@ public class BlockHound {
 
         ClassLoader classLoader = BlockHound.class.getClassLoader();
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(tempJarFile))) {
-            for (Class clazz : new Class[] { BlockHound.class, BlockHoundRuntime.class }) {
+            for (Class clazz : new Class[] { BlockHoundRuntime.class }) {
                 String classFile = clazz.getName().replace(".", "/") + ".class";
                 InputStream inputStream = classLoader.getResourceAsStream(classFile);
                 ZipEntry e = new ZipEntry(classFile);
@@ -166,32 +154,48 @@ public class BlockHound {
             }
         }};
 
-        private final Map<String, Map<String, Boolean>> allowances = new HashMap<String, Map<String, Boolean>>() {{
-            HashMap<String, Boolean> publisherMethods = new HashMap<String, Boolean>() {{
-                put("subscribe", false);
-                put("onNext", false);
-                put("onError", false);
-                put("onComplete", false);
-            }};
-            put("reactor.core.publisher.Flux", publisherMethods);
-            put("reactor.core.publisher.Mono", publisherMethods);
-            put("reactor.core.publisher.ParallelFlux", publisherMethods);
+        private final Map<Class<?>, Map<String, Boolean>> allowances = new HashMap<Class<?>, Map<String, Boolean>>() {{
+            try {
+                HashMap<String, Boolean> publisherMethods = new HashMap<String, Boolean>() {{
+                    put("subscribe", false);
+                    put("onNext", false);
+                    put("onError", false);
+                    put("onComplete", false);
+                }};
+                put(Class.forName("reactor.core.publisher.Flux"), publisherMethods);
+                put(Class.forName("reactor.core.publisher.Mono"), publisherMethods);
+                put(Class.forName("reactor.core.publisher.ParallelFlux"), publisherMethods);
 
-            put("reactor.core.scheduler.SchedulerTask", singletonMap("call", false));
-            put("reactor.core.scheduler.WorkerTask", singletonMap("call", false));
-            put("reactor.core.scheduler.PeriodicWorkerTask", singletonMap("call", false));
-            put("reactor.core.scheduler.InstantPeriodicWorkerTask", singletonMap("call", false));
+                put(Class.forName("reactor.core.scheduler.SchedulerTask"), singletonMap("call", false));
+                put(Class.forName("reactor.core.scheduler.WorkerTask"), singletonMap("call", false));
+                put(Class.forName("reactor.core.scheduler.PeriodicWorkerTask"), singletonMap("call", false));
+                put(Class.forName("reactor.core.scheduler.InstantPeriodicWorkerTask"), singletonMap("call", false));
 
-            put("reactor.core.scheduler.Schedulers", new HashMap<String, Boolean>() {{
-                put("workerSchedule", true);
-                put("workerSchedulePeriodically", true);
-            }});
+                put(Class.forName("reactor.core.scheduler.Schedulers"), new HashMap<String, Boolean>() {{
+                    put("workerSchedule", true);
+                    put("workerSchedulePeriodically", true);
+                }});
 
-            put("java.lang.ClassLoader", singletonMap("loadClass", true));
+                put(ClassLoader.class, singletonMap("loadClass", true));
+            }
+            catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
 
-            put("org.gradle.internal.io.LineBufferingOutputStream", singletonMap("write", true));
-            put("ch.qos.logback.classic.Logger", singletonMap("callAppenders", true));
+            try {
+                put(Class.forName("org.gradle.internal.io.LineBufferingOutputStream"), singletonMap("write", true));
+            } catch (ClassNotFoundException __) {
+            }
+
+            try {
+                put(Class.forName("ch.qos.logback.classic.Logger"), singletonMap("callAppenders", true));
+            } catch (ClassNotFoundException e) {
+            }
         }};
+
+        private Consumer<BlockingMethod> onBlockingMethod = method -> {
+            throw new Error(String.format("Blocking call! %s%s%s", method.getClassName(), method.isStatic() ? "." : "#", method.getName()));
+        };
 
         public Builder markAsBlocking(Class clazz, String methodName, String signature) {
             blockingMethods.computeIfAbsent(clazz.getCanonicalName().replace(".", "/"), __ -> new HashMap<>())
@@ -201,12 +205,17 @@ public class BlockHound {
         }
 
         public Builder allowBlockingCallsInside(Class clazz, String methodName) {
-            allowances.computeIfAbsent(clazz.getCanonicalName(), __ -> new HashMap<>()).put(methodName, true);
+            allowances.computeIfAbsent(clazz, __ -> new HashMap<>()).put(methodName, true);
             return this;
         }
 
         public Builder disallowBlockingCallsInside(Class clazz, String methodName) {
-            allowances.computeIfAbsent(clazz.getCanonicalName(), __ -> new HashMap<>()).put(methodName, false);
+            allowances.computeIfAbsent(clazz, __ -> new HashMap<>()).put(methodName, false);
+            return this;
+        }
+
+        public Builder blockingMethodCallback(Consumer<BlockingMethod> consumer) {
+            this.onBlockingMethod = consumer;
             return this;
         }
 
@@ -223,9 +232,23 @@ public class BlockHound {
 
                 injectBootstrapClasses(instrumentation);
 
-                allowances.forEach((className, methods) -> {
-                    methods.forEach((methodName, allowed) -> markMethod(className, methodName, allowed));
-                });
+                Method markMethod;
+                try {
+                    Class<?> aClass = ClassLoader.getSystemClassLoader().getParent().loadClass(BlockHoundRuntime.class.getCanonicalName());
+                    markMethod = aClass.getMethod("markMethod", Class.class, String.class, boolean.class);
+                }
+                catch (Throwable e) {
+                    throw new RuntimeException(e);
+                }
+
+                allowances.forEach((clazz, methods) -> methods.forEach((methodName, allowed) -> {
+                    try {
+                        markMethod.invoke(null, clazz, methodName, allowed);
+                    }
+                    catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                }));
 
                 ClassFileTransformer transformer = new BlockingClassFileTransformer(blockingMethods);
 
@@ -251,6 +274,15 @@ public class BlockHound {
                 Field initializedField = aClass.getDeclaredField("initialized");
                 initializedField.setAccessible(true);
                 initializedField.setBoolean(null, true);
+
+                Field blockingMethodConsumerField = aClass.getDeclaredField("blockingMethodConsumer");
+                blockingMethodConsumerField.setAccessible(true);
+                blockingMethodConsumerField.set(null, (Consumer<Object[]>) args -> {
+                    String className = (String) args[0];
+                    String methodName = (String) args[1];
+                    int modifiers = (Integer) args[2];
+                    onBlockingMethod.accept(new BlockingMethod(className, methodName, modifiers));
+                });
             }
             catch (Throwable e) {
                 throw new RuntimeException(e);
@@ -314,7 +346,7 @@ public class BlockHound {
                                 "reactor.BlockHoundRuntime.checkBlocking(" +
                                 "\"" + className.replace("/", ".") + "\"," +
                                 "\"" + methodName + "\"," +
-                                ((newMethod.getModifiers() & ACC_STATIC) != 0) +
+                                newMethod.getModifiers() +
                                 ");" +
                                 "}"
                         );
