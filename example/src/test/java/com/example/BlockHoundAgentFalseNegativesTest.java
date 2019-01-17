@@ -24,7 +24,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,7 +52,7 @@ public class BlockHoundAgentFalseNegativesTest {
         };
         Throwable e = Assertions.catchThrowable(() -> {
             Mono.fromCallable(() -> {
-                return classLoader.loadClass(UUID.randomUUID().toString());
+                return classLoader.loadClass("does.not.exist");
             }).hide().subscribeOn(Schedulers.parallel()).block(Duration.ofSeconds(10));
         });
 
