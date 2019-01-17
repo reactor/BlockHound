@@ -317,7 +317,12 @@ public class BlockHound {
                     String methodName = methodEntry.getKey();
 
                     for (String signature : methodEntry.getValue()) {
-                        CtMethod oldMethod = ct.getMethod(methodName, signature);
+                        final CtMethod oldMethod;
+                        try {
+                            oldMethod = ct.getMethod(methodName, signature);
+                        } catch (NotFoundException e) {
+                            continue;
+                        }
 
                         CtMethod newMethod = oldMethod;
                         if ((oldMethod.getModifiers() & ACC_NATIVE) != 0) {
