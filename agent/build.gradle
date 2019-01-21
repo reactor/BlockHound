@@ -41,6 +41,7 @@ repositories {
 dependencies {
     compile 'net.bytebuddy:byte-buddy:1.9.6'
     compile 'net.bytebuddy:byte-buddy-agent:1.9.6'
+    compileOnly 'io.projectreactor:reactor-core:3.2.2.RELEASE'
 
     // TODO use ByteBuddy only
     compile 'org.javassist:javassist:3.24.0-GA'

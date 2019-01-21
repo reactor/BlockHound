@@ -21,6 +21,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 public class BlockHoundRuntime {
 
@@ -41,7 +42,7 @@ public class BlockHoundRuntime {
     @SuppressWarnings("unused")
     public static native void markMethod(Class clazz, String methodName, boolean allowed);
 
-    private static native boolean hook();
+    private static native boolean isBlocking();
 
     private static volatile boolean initialized = false;
 
@@ -49,9 +50,23 @@ public class BlockHoundRuntime {
     private static volatile Consumer<Object[]> blockingMethodConsumer;
 
     @SuppressWarnings("unused")
+    private static volatile Predicate<Thread> blockingThreadPredicate;
+
+    @SuppressWarnings("unused")
     public static void checkBlocking(String className, String methodName, int modifiers) {
-        if (initialized && hook()) {
+        if (initialized && isBlocking()) {
             blockingMethodConsumer.accept(new Object[] { className, methodName, modifiers });
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private static boolean isBlockingThread(Thread thread) {
+        try {
+            return blockingThreadPredicate.test(thread);
+        }
+        catch (Error e) {
+            e.printStackTrace();
+            throw e;
         }
     }
 }

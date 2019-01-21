@@ -7,11 +7,15 @@ test {
     dependsOn(tasks.getByPath(":agent:shadowJar"))
 
     sourceCompatibility = targetCompatibility = 10
+
+    forkEvery = 1
+    maxParallelForks = 1
 }
 
 dependencies {
     testCompile project(path: ":agent", configuration: 'shadow')
     testCompile 'io.projectreactor:reactor-core:3.2.2.RELEASE'
+    testCompile 'io.reactivex.rxjava2:rxjava:2.2.5'
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.assertj:assertj-core:3.11.1'

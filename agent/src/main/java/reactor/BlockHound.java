@@ -19,6 +19,7 @@ package reactor;
 import javassist.*;
 import javassist.bytecode.AttributeInfo;
 import net.bytebuddy.agent.ByteBuddyAgent;
+import reactor.core.scheduler.NonBlocking;
 
 import java.io.*;
 import java.lang.instrument.ClassFileTransformer;
@@ -32,6 +33,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -177,6 +180,7 @@ public class BlockHound {
                 }});
 
                 put(ClassLoader.class, singletonMap("loadClass", true));
+                put(Throwable.class, singletonMap("printStackTrace", true));
             }
             catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
@@ -197,6 +201,8 @@ public class BlockHound {
             throw new Error(String.format("Blocking call! %s%s%s", method.getClassName(), method.isStatic() ? "." : "#", method.getName()));
         };
 
+        private Predicate<Thread> blockingThreadPredicate = NonBlocking.class::isInstance;
+
         public Builder markAsBlocking(Class clazz, String methodName, String signature) {
             blockingMethods.computeIfAbsent(clazz.getCanonicalName().replace(".", "/"), __ -> new HashMap<>())
                            .computeIfAbsent(methodName, __ -> new HashSet<>())
@@ -204,18 +210,33 @@ public class BlockHound {
             return this;
         }
 
-        public Builder allowBlockingCallsInside(Class clazz, String methodName) {
-            allowances.computeIfAbsent(clazz, __ -> new HashMap<>()).put(methodName, true);
+        public Builder allowBlockingCallsInside(String className, String methodName) {
+            try {
+                allowances.computeIfAbsent(Class.forName(className), __ -> new HashMap<>()).put(methodName, true);
+            }
+            catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
             return this;
         }
 
-        public Builder disallowBlockingCallsInside(Class clazz, String methodName) {
-            allowances.computeIfAbsent(clazz, __ -> new HashMap<>()).put(methodName, false);
+        public Builder disallowBlockingCallsInside(String className, String methodName) {
+            try {
+                allowances.computeIfAbsent(Class.forName(className), __ -> new HashMap<>()).put(methodName, false);
+            }
+            catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
             return this;
         }
 
         public Builder blockingMethodCallback(Consumer<BlockingMethod> consumer) {
             this.onBlockingMethod = consumer;
+            return this;
+        }
+
+        public Builder blockingThreadPredicate(Function<Predicate<Thread>, Predicate<Thread>> predicate) {
+            this.blockingThreadPredicate = predicate.apply(this.blockingThreadPredicate);
             return this;
         }
 
@@ -283,6 +304,10 @@ public class BlockHound {
                     int modifiers = (Integer) args[2];
                     onBlockingMethod.accept(new BlockingMethod(className, methodName, modifiers));
                 });
+
+                Field blockingThreadPredicateField = aClass.getDeclaredField("blockingThreadPredicate");
+                blockingThreadPredicateField.setAccessible(true);
+                blockingThreadPredicateField.set(null, blockingThreadPredicate);
             }
             catch (Throwable e) {
                 throw new RuntimeException(e);
