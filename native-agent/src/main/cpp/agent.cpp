@@ -90,12 +90,11 @@ extern "C" JNIEXPORT jboolean JNICALL Java_reactor_BlockHoundRuntime_isBlocking(
         return JNI_FALSE;
     }
 
-    const jint page_size = 64;
+    const jint page_size = 32;
     jint start_depth = 1; // Skip current method
     jint frames_count = -1;
     jvmtiFrameInfo frames[page_size];
 
-    bool allowed = true;
     do {
         jvmti->GetStackTrace(thread, start_depth, page_size, frames, &frames_count);
 
@@ -105,28 +104,14 @@ extern "C" JNIEXPORT jboolean JNICALL Java_reactor_BlockHoundRuntime_isBlocking(
                 continue;
             }
 
-            jclass methodDeclaringClass;
-            jvmti->GetMethodDeclaringClass(methodId, &methodDeclaringClass);
-
-            char *declaringClassName;
-            jvmti->GetClassSignature(methodDeclaringClass, &declaringClassName, NULL);
-
-            char *methodName;
-            char *sig, *gsig;
-            jvmti->GetMethodName(methodId, &methodName, &sig, &gsig);
-
             std::unordered_map<jmethodID, BlockingStackElement>::iterator hookIterator = hooks.find(methodId);
             if (hookIterator != hooks.end()) {
                 BlockingStackElement hook = hookIterator++->second;
-                if (hook.allowed) {
-                    return JNI_FALSE;
-                } else {
-                    allowed = false;
-                }
+                return hook.allowed ? JNI_FALSE : JNI_TRUE;
             }
         }
         start_depth += page_size;
     } while (frames_count == page_size);
 
-    return static_cast<jboolean>(!allowed);
+    return JNI_FALSE;
 }
