@@ -40,7 +40,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static java.util.Collections.singleton;
-import static java.util.Collections.singletonMap;
 import static net.bytebuddy.jar.asm.Opcodes.*;
 
 public class BlockHound {
@@ -169,30 +168,46 @@ public class BlockHound {
                 put(Class.forName("reactor.core.publisher.Mono"), publisherMethods);
                 put(Class.forName("reactor.core.publisher.ParallelFlux"), publisherMethods);
 
-                put(Class.forName("reactor.core.scheduler.SchedulerTask"), singletonMap("call", false));
-                put(Class.forName("reactor.core.scheduler.WorkerTask"), singletonMap("call", false));
-                put(Class.forName("reactor.core.scheduler.PeriodicWorkerTask"), singletonMap("call", false));
-                put(Class.forName("reactor.core.scheduler.InstantPeriodicWorkerTask"), singletonMap("call", false));
+                put(Class.forName("reactor.core.scheduler.SchedulerTask"), new HashMap<String, Boolean>() {{
+                    put("call", false);
+                }});
+                put(Class.forName("reactor.core.scheduler.WorkerTask"), new HashMap<String, Boolean>() {{
+                    put("call", false);
+                }});
+                put(Class.forName("reactor.core.scheduler.PeriodicWorkerTask"), new HashMap<String, Boolean>() {{
+                    put("call", false);
+                }});
+                put(Class.forName("reactor.core.scheduler.InstantPeriodicWorkerTask"), new HashMap<String, Boolean>() {{
+                    put("call", false);
+                }});
 
                 put(Class.forName("reactor.core.scheduler.Schedulers"), new HashMap<String, Boolean>() {{
                     put("workerSchedule", true);
                     put("workerSchedulePeriodically", true);
                 }});
 
-                put(ClassLoader.class, singletonMap("loadClass", true));
-                put(Throwable.class, singletonMap("printStackTrace", true));
+                put(ClassLoader.class, new HashMap<String, Boolean>() {{
+                    put("loadClass", true);
+                }});
+                put(Throwable.class, new HashMap<String, Boolean>() {{
+                    put("printStackTrace", true);
+                }});
             }
             catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
 
             try {
-                put(Class.forName("org.gradle.internal.io.LineBufferingOutputStream"), singletonMap("write", true));
+                put(Class.forName("org.gradle.internal.io.LineBufferingOutputStream"), new HashMap<String, Boolean>() {{
+                    put("write", true);
+                }});
             } catch (ClassNotFoundException __) {
             }
 
             try {
-                put(Class.forName("ch.qos.logback.classic.Logger"), singletonMap("callAppenders", true));
+                put(Class.forName("ch.qos.logback.classic.Logger"), new HashMap<String, Boolean>() {{
+                    put("callAppenders", true);
+                }});
             } catch (ClassNotFoundException e) {
             }
         }};
