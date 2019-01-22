@@ -91,7 +91,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_reactor_BlockHoundRuntime_isBlocking(
     }
 
     const jint page_size = 32;
-    jint start_depth = 1; // Skip current method
+    jint start_depth = 2; // Skip current method & checkBlocking
     jint frames_count = -1;
     jvmtiFrameInfo frames[page_size];
 
