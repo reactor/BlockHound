@@ -3,8 +3,9 @@ package com.example;
 import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.exceptions.CompositeException;
+import io.reactivex.functions.Function;
 import io.reactivex.internal.schedulers.NonBlockingThread;
-import io.reactivex.internal.schedulers.ScheduledDirectTask;
+import io.reactivex.plugins.RxJavaPlugins;
 import org.junit.Test;
 import reactor.BlockHound;
 import reactor.core.publisher.Flux;
@@ -13,12 +14,34 @@ import java.util.concurrent.TimeUnit;
 
 public class RxJavaTest {
 
+    public static class MarkerRunnable implements Runnable {
+
+        final Runnable runnable;
+
+        public MarkerRunnable(Runnable runnable) {
+            this.runnable = runnable;
+        }
+
+        @Override
+        public void run() {
+            runnable.run();
+        }
+    }
+
     static {
+        Function<? super Runnable, ? extends Runnable> oldHandler = RxJavaPlugins.getScheduleHandler();
+
+        RxJavaPlugins.setScheduleHandler(
+                oldHandler != null
+                        ? r -> new MarkerRunnable(oldHandler.apply(r))
+                        : MarkerRunnable::new
+        );
+
         BlockHound
                 .builder()
                 .blockingThreadPredicate(current -> current.or(NonBlockingThread.class::isInstance))
                 // TODO more places?
-                .disallowBlockingCallsInside(ScheduledDirectTask.class.getName(), "call")
+                .disallowBlockingCallsInside(MarkerRunnable.class.getName(), "run")
                 .install();
     }
 

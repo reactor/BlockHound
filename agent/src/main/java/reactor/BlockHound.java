@@ -185,17 +185,17 @@ public class BlockHound {
                     put("workerSchedule", true);
                     put("workerSchedulePeriodically", true);
                 }});
-
-                put(ClassLoader.class, new HashMap<String, Boolean>() {{
-                    put("loadClass", true);
-                }});
-                put(Throwable.class, new HashMap<String, Boolean>() {{
-                    put("printStackTrace", true);
-                }});
             }
             catch (ClassNotFoundException e) {
                 throw new RuntimeException(e);
             }
+
+            put(ClassLoader.class, new HashMap<String, Boolean>() {{
+                put("loadClass", true);
+            }});
+            put(Throwable.class, new HashMap<String, Boolean>() {{
+                put("printStackTrace", true);
+            }});
 
             try {
                 put(Class.forName("org.gradle.internal.io.LineBufferingOutputStream"), new HashMap<String, Boolean>() {{
@@ -268,14 +268,17 @@ public class BlockHound {
 
                 injectBootstrapClasses(instrumentation);
 
+                Class<?> runtimeClass;
                 Method markMethod;
                 try {
-                    Class<?> aClass = ClassLoader.getSystemClassLoader().getParent().loadClass(BlockHoundRuntime.class.getCanonicalName());
-                    markMethod = aClass.getMethod("markMethod", Class.class, String.class, boolean.class);
+                    runtimeClass = ClassLoader.getSystemClassLoader().getParent().loadClass(BlockHoundRuntime.class.getCanonicalName());
+                    markMethod = runtimeClass.getMethod("markMethod", Class.class, String.class, boolean.class);
                 }
                 catch (Throwable e) {
                     throw new RuntimeException(e);
                 }
+
+                markMethod.invoke(null, runtimeClass, "checkBlocking", true);
 
                 allowances.forEach((clazz, methods) -> methods.forEach((methodName, allowed) -> {
                     try {
@@ -306,12 +309,11 @@ public class BlockHound {
                     }
                 }
 
-                Class<?> aClass = ClassLoader.getSystemClassLoader().getParent().loadClass(BlockHoundRuntime.class.getCanonicalName());
-                Field initializedField = aClass.getDeclaredField("initialized");
+                Field initializedField = runtimeClass.getDeclaredField("initialized");
                 initializedField.setAccessible(true);
                 initializedField.setBoolean(null, true);
 
-                Field blockingMethodConsumerField = aClass.getDeclaredField("blockingMethodConsumer");
+                Field blockingMethodConsumerField = runtimeClass.getDeclaredField("blockingMethodConsumer");
                 blockingMethodConsumerField.setAccessible(true);
                 blockingMethodConsumerField.set(null, (Consumer<Object[]>) args -> {
                     String className = (String) args[0];
@@ -320,7 +322,7 @@ public class BlockHound {
                     onBlockingMethod.accept(new BlockingMethod(className, methodName, modifiers));
                 });
 
-                Field blockingThreadPredicateField = aClass.getDeclaredField("blockingThreadPredicate");
+                Field blockingThreadPredicateField = runtimeClass.getDeclaredField("blockingThreadPredicate");
                 blockingThreadPredicateField.setAccessible(true);
                 blockingThreadPredicateField.set(null, blockingThreadPredicate);
             }
