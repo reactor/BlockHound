@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class BlockHoundAgentFalseNegativesTest {
+public class FalseNegativesTest {
 
     static {
         BlockHound.install();

@@ -47,4 +47,9 @@ public class BlockingMethod {
     public boolean isStatic() {
         return (getModifiers() & ACC_STATIC) != 0;
     }
+
+    @Override
+    public String toString() {
+        return String.format("%s%s%s", className, isStatic() ? "." : "#", name);
+    }
 }

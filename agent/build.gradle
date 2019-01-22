@@ -39,9 +39,13 @@ repositories {
 }
 
 dependencies {
+    compileOnly 'com.google.auto.service:auto-service:1.0-rc4'
+
     compile 'net.bytebuddy:byte-buddy:1.9.6'
     compile 'net.bytebuddy:byte-buddy-agent:1.9.6'
-    compileOnly 'io.projectreactor:reactor-core:3.2.2.RELEASE'
+
+    compileOnly 'io.projectreactor:reactor-core:3.2.5.RELEASE'
+    compileOnly 'io.reactivex.rxjava2:rxjava:2.2.5'
 
     // TODO use ByteBuddy only
     compile 'org.javassist:javassist:3.24.0-GA'

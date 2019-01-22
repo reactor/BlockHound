@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(Parameterized.class)
-public class BlockHoundAgentTest {
+public class ReactorTest {
 
     static {
         BlockHound.install();

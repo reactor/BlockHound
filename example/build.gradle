@@ -8,6 +8,9 @@ test {
 
     sourceCompatibility = targetCompatibility = 10
 
+    // Creates a JVM per test because the agent can be installed only once,
+    // and we test different installations.
+    // This is not required in normal testing scenarios
     forkEvery = 1
     maxParallelForks = 1
 }

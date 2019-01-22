@@ -19,25 +19,21 @@ package reactor;
 import javassist.*;
 import javassist.bytecode.AttributeInfo;
 import net.bytebuddy.agent.ByteBuddyAgent;
-import reactor.core.scheduler.NonBlocking;
+import reactor.blockhound.integration.BlockHoundIntegration;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.security.ProtectionDomain;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.jar.JarFile;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import static java.util.Collections.singleton;
 import static net.bytebuddy.jar.asm.Opcodes.*;
@@ -52,31 +48,19 @@ public class BlockHound {
         return new Builder();
     }
 
-    public static void install() {
-        builder().install();
-    }
-
-    private static void injectBootstrapClasses(Instrumentation instrumentation) throws IOException {
-        File tempJarFile = File.createTempFile("BlockHound", ".jar");
-
-        ClassLoader classLoader = BlockHound.class.getClassLoader();
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(tempJarFile))) {
-            for (Class clazz : new Class[] { BlockHoundRuntime.class }) {
-                String classFile = clazz.getName().replace(".", "/") + ".class";
-                InputStream inputStream = classLoader.getResourceAsStream(classFile);
-                ZipEntry e = new ZipEntry(classFile);
-                zipOutputStream.putNextEntry(e);
-
-                byte[] buf = new byte[4096];
-                int n;
-                while ((n = inputStream.read(buf)) > 0) {
-                    zipOutputStream.write(buf, 0, n);
-                }
-
-                zipOutputStream.closeEntry();
-            }
-        }
-        instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(tempJarFile));
+    /**
+     * Loads integrations with {@link ServiceLoader}, adds provided integrations,
+     * and installs the BlockHound instrumentation.
+     * If you don't want to load the integrations, use {@link #builder()} method.
+     */
+    public static void install(BlockHoundIntegration... integrations) {
+        Builder builder = builder();
+        ServiceLoader<BlockHoundIntegration> serviceLoader = ServiceLoader.load(BlockHoundIntegration.class);
+        Stream
+                .concat(StreamSupport.stream(serviceLoader.spliterator(), false), Stream.of(integrations))
+                .sorted()
+                .forEach(builder::with);
+        builder.install();
     }
 
     public static class Builder {
@@ -157,69 +141,26 @@ public class BlockHound {
         }};
 
         private final Map<Class<?>, Map<String, Boolean>> allowances = new HashMap<Class<?>, Map<String, Boolean>>() {{
-            try {
-                HashMap<String, Boolean> publisherMethods = new HashMap<String, Boolean>() {{
-                    put("subscribe", false);
-                    put("onNext", false);
-                    put("onError", false);
-                    put("onComplete", false);
-                }};
-                put(Class.forName("reactor.core.publisher.Flux"), publisherMethods);
-                put(Class.forName("reactor.core.publisher.Mono"), publisherMethods);
-                put(Class.forName("reactor.core.publisher.ParallelFlux"), publisherMethods);
-
-                put(Class.forName("reactor.core.scheduler.SchedulerTask"), new HashMap<String, Boolean>() {{
-                    put("call", false);
-                }});
-                put(Class.forName("reactor.core.scheduler.WorkerTask"), new HashMap<String, Boolean>() {{
-                    put("call", false);
-                }});
-                put(Class.forName("reactor.core.scheduler.PeriodicWorkerTask"), new HashMap<String, Boolean>() {{
-                    put("call", false);
-                }});
-                put(Class.forName("reactor.core.scheduler.InstantPeriodicWorkerTask"), new HashMap<String, Boolean>() {{
-                    put("call", false);
-                }});
-
-                put(Class.forName("reactor.core.scheduler.Schedulers"), new HashMap<String, Boolean>() {{
-                    put("workerSchedule", true);
-                    put("workerSchedulePeriodically", true);
-                }});
-            }
-            catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-
             put(ClassLoader.class, new HashMap<String, Boolean>() {{
                 put("loadClass", true);
             }});
             put(Throwable.class, new HashMap<String, Boolean>() {{
                 put("printStackTrace", true);
             }});
-
-            try {
-                put(Class.forName("org.gradle.internal.io.LineBufferingOutputStream"), new HashMap<String, Boolean>() {{
-                    put("write", true);
-                }});
-            } catch (ClassNotFoundException __) {
-            }
-
-            try {
-                put(Class.forName("ch.qos.logback.classic.Logger"), new HashMap<String, Boolean>() {{
-                    put("callAppenders", true);
-                }});
-            } catch (ClassNotFoundException e) {
-            }
         }};
 
         private Consumer<BlockingMethod> onBlockingMethod = method -> {
-            throw new Error(String.format("Blocking call! %s%s%s", method.getClassName(), method.isStatic() ? "." : "#", method.getName()));
+            throw new Error(String.format("Blocking call! %s", method));
         };
 
-        private Predicate<Thread> blockingThreadPredicate = NonBlocking.class::isInstance;
+        private Predicate<Thread> blockingThreadPredicate = t -> false;
 
         public Builder markAsBlocking(Class clazz, String methodName, String signature) {
-            blockingMethods.computeIfAbsent(clazz.getCanonicalName().replace(".", "/"), __ -> new HashMap<>())
+            return markAsBlocking(clazz.getCanonicalName(), methodName, signature);
+        }
+
+        public Builder markAsBlocking(String className, String methodName, String signature) {
+            blockingMethods.computeIfAbsent(className.replace(".", "/"), __ -> new HashMap<>())
                            .computeIfAbsent(methodName, __ -> new HashSet<>())
                            .add(signature);
             return this;
@@ -255,7 +196,12 @@ public class BlockHound {
             return this;
         }
 
-        public Builder() {
+        public Builder with(BlockHoundIntegration integration) {
+            integration.applyTo(this);
+            return this;
+        }
+
+        Builder() {
         }
 
         public void install() {
@@ -266,7 +212,7 @@ public class BlockHound {
 
                 Instrumentation instrumentation = ByteBuddyAgent.install();
 
-                injectBootstrapClasses(instrumentation);
+                InstrumentationUtils.injectBootstrapClasses(instrumentation, BlockHoundRuntime.class);
 
                 Class<?> runtimeClass;
                 Method markMethod;
