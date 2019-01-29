@@ -11,3 +11,8 @@ build/
 .vscode/
 
 cmake-build-*/
+
+
+.project
+.classpath
+bin/
