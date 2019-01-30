@@ -59,6 +59,7 @@ public class ReactorIntegration implements BlockHoundIntegration {
                     }
                 };
             });
+            builder.disallowBlockingCallsInside(Wrapper.class.getName(), "call");
         }
         catch (NoSuchMethodError e) {
             builder.disallowBlockingCallsInside("reactor.core.scheduler.SchedulerTask", "call");
