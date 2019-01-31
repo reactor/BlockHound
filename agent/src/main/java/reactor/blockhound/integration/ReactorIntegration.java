@@ -29,14 +29,14 @@ public class ReactorIntegration implements BlockHoundIntegration {
 
     @Override
     public void applyTo(BlockHound.Builder builder) {
-        builder.blockingThreadPredicate(current -> current.or(NonBlocking.class::isInstance));
-
         try {
             Class.forName("reactor.core.publisher.Flux");
         }
         catch (ClassNotFoundException ignored) {
             return;
         }
+
+        builder.blockingThreadPredicate(current -> current.or(NonBlocking.class::isInstance));
 
         for (String className : new String[]{"Flux", "Mono", "ParallelFlux"}) {
             builder.disallowBlockingCallsInside("reactor.core.publisher." + className, "subscribe");
