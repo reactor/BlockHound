@@ -33,7 +33,7 @@ Note that it points to the exact place where the blocking call got triggered. In
 
 ## Getting it
 
-Download it from repo.spring.io or Maven Central repositories (stable releases only):
+Download it from Maven Central repositories (stable releases only) or repo.spring.io:
 
 ```groovy
 repositories {

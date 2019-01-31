@@ -17,7 +17,7 @@ public void connect(SocketAddress endpoint, int timeout) {
     );
 ```
 
-`checkBlocking` will delegate it to the JNI helper and maybe call the "blocking method detected" callback.
+`checkBlocking` will delegate to the JNI helper and maybe call the "blocking method detected" callback.
 
 The arguments are passed to the callback, but not used in the "blocking call" decision making.
 

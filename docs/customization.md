@@ -3,7 +3,7 @@
 BlockHound provides three means of usage:
 1. `BlockHound.install()` - will use `ServiceLoader` to load all known `reactor.blockhound.integration.BlockHoundIntegration`s
 1. `BlockHound.install(BlockHoundIntegration... integrations)` - same as `BlockHound.install()`, but adds user-provided integrations to the list.
-1. `BlockHound.builder().install()` - will create a **new** builder, **without** the integrations.  
+1. `BlockHound.builder().install()` - will create a **new** builder, **without** discovering any integrations.  
 You may install them manually by using `BlockHound.builder().with(new MyIntegration()).install()`.
 
 ## Marking more methods as blocking
@@ -23,27 +23,30 @@ Note that the `signature` argument is
 * `Builder#disallowBlockingCallsInside(String className, String methodName)`
 
 Example:
+
+This will allow blocking method calls inside `Logger#callAppenders` down the callstack:
 ```java
 builder.allowBlockingCallsInside(
     "ch.qos.logback.classic.Logger",
     "callAppenders"
 );
 ```
-This will allow blocking method calls inside `Logger#callAppenders` down the callstack.
 
+While this disallows blocking calls unless there is an allowed method down the callstack:
 ```java
 builder.disallowBlockingCallsInside(
     "reactor.core.publisher.Flux",
     "subscribe"
 );
 ```
-While this disallows blocking calls unless there is an allowed method down the callstack.
 
 ## Custom blocking method callback
 * `Builder#blockingMethodCallback(Consumer<BlockingMethod> consumer)`
 
 By default, BlockHound will throw an error when it detects a blocking call.  
-But you can implement your own logic by providing the callback. Example:
+But you can implement your own logic by setting a callback.
+
+Example:
 ```java
 builder.blockingMethodCallback(it -> {
     new Error(it.toString()).printStackTrace();
@@ -62,5 +65,5 @@ builder.blockingThreadPredicate(current -> {
 });
 ```
 
-**Warning:** do not ignore the `current` predicate unless you mean to.
-Otherwise, other integrations will not work.
+ ⚠️ **Warning:** do not ignore the `current` predicate unless you're absolutely sure you know what you're doing.
+Other integrations will not work if you override it instead of using `Predicate#or`.

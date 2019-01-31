@@ -42,5 +42,5 @@ Mono.delay(Duration.ofMillis(1))
     .block(); // should throw an exception about Thread.sleep
 ```
 
-## Customization
-See [customization](customization.md).
+## What's Next?
+You can further customize Blockhound's behavior, see [customization](customization.md).
