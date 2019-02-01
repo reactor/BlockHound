@@ -25,7 +25,7 @@ public class MyIntegration implements BlockHoundIntegration {
     public void applyTo(BlockHound.Builder builder) {
         builder.nonBlockingThreadPredicate(current -> {
             return current.or(t -> {
-                if (i.getName() == null) {
+                if (t.getName() == null) {
                     return false;
                 }
                 return t.getName().contains("my-pool-");
