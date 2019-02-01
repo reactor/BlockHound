@@ -29,14 +29,14 @@ public class ReactorIntegration implements BlockHoundIntegration {
 
     @Override
     public void applyTo(BlockHound.Builder builder) {
-        builder.nonBlockingThreadPredicate(current -> current.or(NonBlocking.class::isInstance));
-
         try {
             Class.forName("reactor.core.publisher.Flux");
         }
         catch (ClassNotFoundException ignored) {
             return;
         }
+
+        builder.nonBlockingThreadPredicate(current -> current.or(NonBlocking.class::isInstance));
 
         for (String className : new String[]{"Flux", "Mono", "ParallelFlux"}) {
             builder.disallowBlockingCallsInside("reactor.core.publisher." + className, "subscribe");
@@ -59,6 +59,7 @@ public class ReactorIntegration implements BlockHoundIntegration {
                     }
                 };
             });
+            builder.disallowBlockingCallsInside(Wrapper.class.getName(), "call");
         }
         catch (NoSuchMethodError e) {
             builder.disallowBlockingCallsInside("reactor.core.scheduler.SchedulerTask", "call");
