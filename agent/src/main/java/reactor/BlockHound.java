@@ -153,7 +153,7 @@ public class BlockHound {
             throw new Error(String.format("Blocking call! %s", method));
         };
 
-        private Predicate<Thread> blockingThreadPredicate = t -> false;
+        private Predicate<Thread> threadPredicate = t -> false;
 
         public Builder markAsBlocking(Class clazz, String methodName, String signature) {
             return markAsBlocking(clazz.getCanonicalName(), methodName, signature);
@@ -191,8 +191,8 @@ public class BlockHound {
             return this;
         }
 
-        public Builder blockingThreadPredicate(Function<Predicate<Thread>, Predicate<Thread>> predicate) {
-            this.blockingThreadPredicate = predicate.apply(this.blockingThreadPredicate);
+        public Builder nonBlockingThreadPredicate(Function<Predicate<Thread>, Predicate<Thread>> predicate) {
+            this.threadPredicate = predicate.apply(this.threadPredicate);
             return this;
         }
 
@@ -268,9 +268,9 @@ public class BlockHound {
                     onBlockingMethod.accept(new BlockingMethod(className, methodName, modifiers));
                 });
 
-                Field blockingThreadPredicateField = runtimeClass.getDeclaredField("blockingThreadPredicate");
-                blockingThreadPredicateField.setAccessible(true);
-                blockingThreadPredicateField.set(null, blockingThreadPredicate);
+                Field threadPredicateField = runtimeClass.getDeclaredField("threadPredicate");
+                threadPredicateField.setAccessible(true);
+                threadPredicateField.set(null, threadPredicate);
             }
             catch (Throwable e) {
                 throw new RuntimeException(e);

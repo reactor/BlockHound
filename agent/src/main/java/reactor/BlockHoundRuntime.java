@@ -50,7 +50,7 @@ public class BlockHoundRuntime {
     private static volatile Consumer<Object[]> blockingMethodConsumer;
 
     @SuppressWarnings("unused")
-    private static volatile Predicate<Thread> blockingThreadPredicate;
+    private static volatile Predicate<Thread> threadPredicate;
 
     @SuppressWarnings("unused")
     public static void checkBlocking(String className, String methodName, int modifiers) {
@@ -62,7 +62,7 @@ public class BlockHoundRuntime {
     @SuppressWarnings("unused")
     private static boolean isBlockingThread(Thread thread) {
         try {
-            return blockingThreadPredicate.test(thread);
+            return threadPredicate.test(thread);
         }
         catch (Error e) {
             e.printStackTrace();

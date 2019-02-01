@@ -3,7 +3,7 @@
 [![Travis CI](https://travis-ci.org/reactor/BlockHound.svg?branch=master)](https://travis-ci.org/reactor/BlockHound)
 [![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/blockhound/maven-metadata.xml.svg)](https://repo.spring.io/snapshot/io/projectreactor/blockhound/)
 
-Java agent to detect blocking calls from Reactor's non-blocking threads.
+Java agent to detect blocking calls from non-blocking threads.
 
 ## How it works
 BlockHound will transparently instrument the JVM classes and intercept blocking calls (e.g. IO) if they are performed from threads marked as "non-blocking operations only" (ie. threads implementing Reactor's `NonBlocking` marker interface, like those started by `Schedulers.parallel()`). If and when this happens (but remember, this should never happen!:stuck_out_tongue_winking_eye:), an error will be thrown. Here is an example:
@@ -33,7 +33,7 @@ Note that it points to the exact place where the blocking call got triggered. In
 
 ## Getting it
 
-Download it from repo.spring.io or Maven Central repositories (stable releases only):
+Download it from Maven Central repositories (stable releases only) or repo.spring.io:
 
 ```groovy
 repositories {
@@ -47,12 +47,8 @@ dependencies {
 Where `$LATEST_SNAPSHOT` is:  
 ![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/blockhound/maven-metadata.xml.svg)
 
-BlockHound is a JVM agent. You need to "install" it before it starts detecting the issues:
-```java
-BlockHound.install();
-```
-
-The best place to put this line is before *any* code gets executed, e.g. `@BeforeClass`, or `static {}` block, or test listener. The method is idempotent, you can call it multiple times.
+# Quick Start
+See [the docs](./docs/README.md).
 
 -------------------------------------
 _Licensed under [Apache Software License 2.0](www.apache.org/licenses/LICENSE-2.0)_
