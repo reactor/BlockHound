@@ -42,7 +42,7 @@ public class RxJava2Integration implements BlockHoundIntegration {
                         : MarkerRunnable::new
         );
 
-        builder.blockingThreadPredicate(current -> current.or(NonBlockingThread.class::isInstance));
+        builder.nonBlockingThreadPredicate(current -> current.or(NonBlockingThread.class::isInstance));
 
         // TODO more places?
         builder.disallowBlockingCallsInside(MarkerRunnable.class.getName(), "run");

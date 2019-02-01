@@ -29,7 +29,7 @@ public class ReactorIntegration implements BlockHoundIntegration {
 
     @Override
     public void applyTo(BlockHound.Builder builder) {
-        builder.blockingThreadPredicate(current -> current.or(NonBlocking.class::isInstance));
+        builder.nonBlockingThreadPredicate(current -> current.or(NonBlocking.class::isInstance));
 
         try {
             Class.forName("reactor.core.publisher.Flux");

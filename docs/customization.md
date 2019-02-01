@@ -54,13 +54,13 @@ builder.blockingMethodCallback(it -> {
 ```
 Here we dump the stacktrace instead of throwing the error, so that we do not alter an execution of the code.
 
-## Custom blocking thread predicate
-* `Builder#blockingThreadPredicate(Function<Predicate<Thread>, Predicate<Thread>> predicate)`
+## Custom non-blocking thread predicate
+* `Builder#nonBlockingThreadPredicate(Function<Predicate<Thread>, Predicate<Thread>> predicate)`
 
 If you integrate with exotic technologies, or implement your own thread pooling,
 you might want to mark those threads as non-blocking. Example:
 ```java
-builder.blockingThreadPredicate(current -> {
+builder.nonBlockingThreadPredicate(current -> {
     return current.or(it -> it.getName().contains("my-thread-"))
 });
 ```
