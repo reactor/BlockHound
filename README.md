@@ -45,7 +45,7 @@ dependencies {
 }
 ```
 Where `$LATEST_SNAPSHOT` is:  
-![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/blockhound/maven-metadata.xml.svg)
+![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/tools/blockhound/maven-metadata.xml.svg)
 
 # Quick Start
 See [the docs](./docs/README.md).

@@ -13,7 +13,7 @@ dependencies {
 }
 ```
 Where `$LATEST_SNAPSHOT` is:  
-![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/blockhound/maven-metadata.xml.svg)
+![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/tools/blockhound/maven-metadata.xml.svg)
 
 ## Installation
 BlockHound is a JVM agent. You need to "install" it before it starts detecting the issues:
