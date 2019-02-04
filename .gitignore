@@ -18,3 +18,7 @@ bin/
 cmake-build-*/
 
 credentials.yml
+
+.project
+.classpath
+bin/

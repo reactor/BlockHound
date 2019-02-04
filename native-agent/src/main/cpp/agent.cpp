@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 Pivotal Software Inc, All Rights Reserved.
+ * Copyright (c) 2018-2019 Pivotal Software Inc, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "jvmti.h"
 
 #include <cstddef>
@@ -62,7 +63,7 @@ extern "C" JNIEXPORT void JNICALL Java_reactor_BlockHoundRuntime_markMethod(JNIE
     }
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_reactor_BlockHoundRuntime_hook(JNIEnv *env) {
+extern "C" JNIEXPORT jboolean JNICALL Java_reactor_BlockHoundRuntime_isBlocking(JNIEnv *env) {
     jthread thread;
     jvmti->GetCurrentThread(&thread);
 
@@ -77,53 +78,40 @@ extern "C" JNIEXPORT jboolean JNICALL Java_reactor_BlockHoundRuntime_hook(JNIEnv
         t = new ThreadTag();
         jvmti->SetTag(thread, (ptrdiff_t) (void *) t);
 
-        jint interface_count;
-        jclass *classIds;
-        jvmti->GetImplementedInterfaces(env->GetObjectClass(thread), &interface_count, &classIds);
-
-        for (int i = 0; i < interface_count; i++) {
-            char *interfaceName;
-            jvmti->GetClassSignature(classIds[i], &interfaceName, NULL);
-
-            if (strcmp(interfaceName, "Lreactor/core/scheduler/NonBlocking;") == 0) {
-                t->isNonBlocking = true;
-                break;
-            }
-        }
+        // Since we call back into Java code, it might call a blocking method.
+        // However, since "isNonBlocking" is false by default,
+        // it should be safe and not create a recursion problem.
+        jclass runtimeClass = env->FindClass("Lreactor/BlockHoundRuntime;");
+        jmethodID isBlockingThreadMethodId = env->GetStaticMethodID(runtimeClass, "isBlockingThread", "(Ljava/lang/Thread;)Z");
+        t->isNonBlocking = env->CallStaticBooleanMethod(runtimeClass, isBlockingThreadMethodId, thread) == JNI_TRUE;
     }
 
     if (!t->isNonBlocking) {
         return JNI_FALSE;
     }
 
+    const jint page_size = 32;
+    jint start_depth = 2; // Skip current method & checkBlocking
     jint frames_count = -1;
-    jvmtiFrameInfo frames[128];
-    jvmti->GetStackTrace(thread, 0, 128, frames, &frames_count);
+    jvmtiFrameInfo frames[page_size];
 
-    bool allowed = true;
-    for (int i = 1; i < frames_count; i++) {
-        jmethodID methodId = frames[i].method;
+    do {
+        jvmti->GetStackTrace(thread, start_depth, page_size, frames, &frames_count);
 
-        jclass methodDeclaringClass;
-        jvmti->GetMethodDeclaringClass(methodId, &methodDeclaringClass);
+        for (int i = 0; i < frames_count; i++) {
+            jmethodID methodId = frames[i].method;
+            if (!methodId) {
+                continue;
+            }
 
-        char *declaringClassName;
-        jvmti->GetClassSignature(methodDeclaringClass, &declaringClassName, NULL);
-
-        char *methodName;
-        char *sig, *gsig;
-        jvmti->GetMethodName(methodId, &methodName, &sig, &gsig);
-
-        std::unordered_map<jmethodID, BlockingStackElement>::iterator hookIterator = hooks.find(methodId);
-        if (hookIterator != hooks.end()) {
-            BlockingStackElement hook = hookIterator++->second;
-            if (hook.allowed) {
-                return JNI_FALSE;
-            } else {
-                allowed = false;
+            std::unordered_map<jmethodID, BlockingStackElement>::iterator hookIterator = hooks.find(methodId);
+            if (hookIterator != hooks.end()) {
+                BlockingStackElement hook = hookIterator++->second;
+                return hook.allowed ? JNI_FALSE : JNI_TRUE;
             }
         }
-    }
+        start_depth += page_size;
+    } while (frames_count == page_size);
 
-    return static_cast<jboolean>(!allowed);
+    return JNI_FALSE;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 Pivotal Software Inc, All Rights Reserved.
+ * Copyright (c) 2018-2019 Pivotal Software Inc, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.example;
 
 import org.assertj.core.api.Assertions;
@@ -45,7 +46,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(Parameterized.class)
-public class BlockHoundAgentTest {
+public class ReactorTest {
 
     static {
         BlockHound.install();

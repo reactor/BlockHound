@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 Pivotal Software Inc, All Rights Reserved.
+ * Copyright (c) 2018-2019 Pivotal Software Inc, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.example;
 
 import org.assertj.core.api.Assertions;
@@ -24,12 +25,11 @@ import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class BlockHoundAgentFalseNegativesTest {
+public class FalseNegativesTest {
 
     static {
         BlockHound.install();
@@ -53,7 +53,7 @@ public class BlockHoundAgentFalseNegativesTest {
         };
         Throwable e = Assertions.catchThrowable(() -> {
             Mono.fromCallable(() -> {
-                return classLoader.loadClass(UUID.randomUUID().toString());
+                return classLoader.loadClass("does.not.exist");
             }).hide().subscribeOn(Schedulers.parallel()).block(Duration.ofSeconds(10));
         });
 
