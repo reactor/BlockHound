@@ -9,7 +9,7 @@ repositories {
 }
 
 dependencies {
-  testCompile 'io.projectreactor:blockhound:$LATEST_SNAPSHOT'
+  testCompile 'io.projectreactor.tools:blockhound:$LATEST_SNAPSHOT'
 }
 ```
 Where `$LATEST_SNAPSHOT` is:  
