@@ -37,15 +37,18 @@ Download it from Maven Central repositories (stable releases only) or repo.sprin
 
 ```groovy
 repositories {
-  maven { url 'http://repo.spring.io/snapshot' }
+  maven { url 'http://repo.spring.io/milestone' }
+  // maven { url 'http://repo.spring.io/snapshot' }
 }
 
 dependencies {
-  testCompile 'io.projectreactor.tools:blockhound:$LATEST_SNAPSHOT'
+  testCompile 'io.projectreactor.tools:blockhound:$LATEST_RELEASE'
+  // testCompile 'io.projectreactor.tools:blockhound:$LATEST_SNAPSHOT'
 }
 ```
-Where `$LATEST_SNAPSHOT` is:  
-![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/tools/blockhound/maven-metadata.xml.svg)
+Where:  
+`$LATEST_RELEASE` is: ![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/milestone/io/projectreactor/tools/blockhound/maven-metadata.xml.svg?label=)  
+`$LATEST_SNAPSHOT` is: ![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/tools/blockhound/maven-metadata.xml.svg?label=)
 
 # Quick Start
 See [the docs](./docs/README.md).
