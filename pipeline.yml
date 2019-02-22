@@ -1,5 +1,5 @@
 # fly --target spring login --concourse-url https://ci.spring.io --team-name "spring-team"
-# fly --target spring set-pipeline --config pipeline.yml --pipeline BlockHound
+# fly --target spring set-pipeline --config pipeline.yml --load-vars-from=credentials.yml --pipeline BlockHound
 # fly --target spring trigger-job --job=BlockHound/build -w
 ---
 resource_types:
@@ -15,6 +15,13 @@ resources:
   source:
     uri: https://github.com/reactor/BlockHound.git
     branch: master
+
+- name: tagged-source
+  type: git
+  source:
+    uri: https://github.com/reactor/BlockHound.git
+    branch: master
+    tag_filter: "*"
 
 - name: artifactory-repo
   type: artifactory-resource
@@ -54,13 +61,56 @@ jobs:
           start_docker "3" "3" "" ""
           rm -rf ~/.gradle
           ln -s $PWD/.gradle ~/.gradle
-          ./gradlew build publish -Pversion=0.0.1-SNAPSHOT
+          ./gradlew build publish -Pversion=1.0.0.BUILD-SNAPSHOT
           cp -a build/repo/. ../distribution-repository/
           find ../distribution-repository
 
   - put: artifactory-repo
     params:
       repo: libs-snapshot-local
+      folder: distribution-repository
+      build_uri: "https://ci.spring.io/teams/${BUILD_TEAM_NAME}/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}"
+      build_number: "${BUILD_PIPELINE_NAME}-${BUILD_JOB_NAME}-${BUILD_NAME}"
+      disable_checksum_uploads: true
+
+- name: release-milestone
+  serial: true
+  plan:
+  - get: tagged-source
+    trigger: true
+
+  - task: build
+    privileged: true
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source: { repository: bsideup/concourse-build-env }
+      inputs:
+      - name: tagged-source
+      outputs:
+      - name: distribution-repository
+      caches:
+        - path: tagged-source/.gradle
+      run:
+        dir: tagged-source
+        path: bash
+        args:
+        - -exc
+        - |
+          TAG=$(git tag --points-at HEAD)
+
+          source /docker-lib.sh
+          start_docker "3" "3" "" ""
+          rm -rf ~/.gradle
+          ln -s $PWD/.gradle ~/.gradle
+          ./gradlew build publish -Pversion=$TAG
+          cp -a build/repo/. ../distribution-repository/
+          find ../distribution-repository
+
+  - put: artifactory-repo
+    params:
+      repo: libs-milestone-local
       folder: distribution-repository
       build_uri: "https://ci.spring.io/teams/${BUILD_TEAM_NAME}/pipelines/${BUILD_PIPELINE_NAME}/jobs/${BUILD_JOB_NAME}/builds/${BUILD_NAME}"
       build_number: "${BUILD_PIPELINE_NAME}-${BUILD_JOB_NAME}-${BUILD_NAME}"
