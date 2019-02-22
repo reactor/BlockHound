@@ -1,7 +1,7 @@
 # BlockHound (experimental)
 
 [![Travis CI](https://travis-ci.org/reactor/BlockHound.svg?branch=master)](https://travis-ci.org/reactor/BlockHound)
-[![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/blockhound/maven-metadata.xml.svg)](https://repo.spring.io/snapshot/io/projectreactor/blockhound/)
+[![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/tools/blockhound/maven-metadata.xml.svg)](https://repo.spring.io/snapshot/io/projectreactor/tools/blockhound/)
 
 Java agent to detect blocking calls from non-blocking threads.
 
