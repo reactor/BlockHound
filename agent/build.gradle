@@ -51,11 +51,23 @@ dependencies {
     compile 'org.javassist:javassist:3.24.0-GA'
 }
 
+task sourcesJar(type: Jar) {
+    classifier 'sources'
+    from sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar) {
+    from javadoc
+    classifier = 'javadoc'
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) { publication ->
             artifacts.removeAll { it.classifier == null }
             artifact project.tasks.shadowJar
+            artifact sourcesJar
+            artifact javadocJar
 
             artifactId 'blockhound'
         }
