@@ -3,4 +3,5 @@ rootProject.name = 'reactor-block-hound'
 
 include 'agent'
 include 'native-agent'
+include 'spring'
 include 'example'

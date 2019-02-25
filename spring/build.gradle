@@ -1,0 +1,44 @@
+plugins {
+    id "java"
+    id "maven-publish"
+}
+
+sourceCompatibility = targetCompatibility = 8
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    compile project(":agent")
+
+    compileOnly 'org.springframework.boot:spring-boot:2.1.3.RELEASE'
+
+    testCompile project(path: ":agent", configuration: 'shadow')
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.assertj:assertj-core:3.11.1'
+    testCompile 'org.springframework.boot:spring-boot:2.1.3.RELEASE'
+    testCompile 'io.projectreactor:reactor-core:3.2.2.RELEASE'
+}
+
+test {
+    dependsOn(tasks.getByPath(":agent:shadowJar"))
+    forkEvery = 1
+    maxParallelForks = 1
+}
+
+task sourcesJar(type: Jar) {
+    classifier 'sources'
+    from sourceSets.main.allJava
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) { publication ->
+            from components.java
+            artifact sourcesJar
+
+            artifactId 'blockhound-spring'
+        }
+    }
+}
