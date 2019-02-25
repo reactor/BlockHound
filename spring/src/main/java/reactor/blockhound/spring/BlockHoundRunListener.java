@@ -35,7 +35,7 @@ public class BlockHoundRunListener implements SpringApplicationRunListener, Orde
 
     @Override
     public int getOrder() {
-        return Ordered.LOWEST_PRECEDENCE;
+        return Ordered.HIGHEST_PRECEDENCE;
     }
 
     @Override
