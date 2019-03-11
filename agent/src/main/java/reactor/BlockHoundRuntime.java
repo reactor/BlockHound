@@ -16,27 +16,14 @@
 
 package reactor;
 
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class BlockHoundRuntime {
 
-    static {
-        try {
-            Path tempFile = Files.createTempFile("BlockHound", ".dylib");
-            try (InputStream inputStream = BlockHoundRuntime.class.getResource("/" + System.mapLibraryName("BlockHound")).openStream()) {
-                Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
-            }
-            System.load(tempFile.toAbsolutePath().toString());
-        }
-        catch (Throwable e) {
-            e.printStackTrace();
-            throw new RuntimeException(e);
-        }
+    @SuppressWarnings("unused")
+    public static void init(String nativeLibraryFileName) {
+        System.load(nativeLibraryFileName);
     }
 
     @SuppressWarnings("unused")

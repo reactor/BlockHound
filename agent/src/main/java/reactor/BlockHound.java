@@ -22,10 +22,16 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -214,10 +220,19 @@ public class BlockHound {
 
                 InstrumentationUtils.injectBootstrapClasses(instrumentation, BlockHoundRuntime.class);
 
-                Class<?> runtimeClass;
-                Method markMethod;
+                final Class<?> runtimeClass;
+                final Method initMethod;
                 try {
                     runtimeClass = ClassLoader.getSystemClassLoader().getParent().loadClass(BlockHoundRuntime.class.getCanonicalName());
+                    initMethod = runtimeClass.getMethod("init", String.class);
+                }
+                catch (Throwable e) {
+                    throw new RuntimeException(e);
+                }
+                initMethod.invoke(null, extractNativeLibFile().toString());
+
+                final Method markMethod;
+                try {
                     markMethod = runtimeClass.getMethod("markMethod", Class.class, String.class, boolean.class);
                 }
                 catch (Throwable e) {
@@ -308,7 +323,8 @@ public class BlockHound {
                         final CtMethod oldMethod;
                         try {
                             oldMethod = ct.getMethod(methodName, signature);
-                        } catch (NotFoundException e) {
+                        }
+                        catch (NotFoundException e) {
                             continue;
                         }
 
@@ -354,5 +370,20 @@ public class BlockHound {
 
             return classfileBuffer;
         }
+    }
+
+    private static Path extractNativeLibFile() throws IOException {
+        String nativeLibraryFileName = System.mapLibraryName("BlockHound");
+        URL nativeLibraryURL = BlockHound.class.getResource("/" + nativeLibraryFileName);
+
+        if (nativeLibraryURL == null) {
+            throw new IllegalStateException("Failed to load the following lib from a classpath: " + nativeLibraryFileName);
+        }
+
+        Path tempFile = Files.createTempFile("BlockHound", ".dylib");
+        try (InputStream inputStream = nativeLibraryURL.openStream()) {
+            Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+        }
+        return tempFile.toAbsolutePath();
     }
 }
