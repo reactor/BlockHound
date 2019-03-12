@@ -300,8 +300,13 @@ public class BlockHound {
 
         private final Map<String, Map<String, Set<String>>> blockingMethods;
 
+        private final ClassPool cp;
+
         BlockingClassFileTransformer(Map<String, Map<String, Set<String>>> blockingMethods) {
             this.blockingMethods = blockingMethods;
+            cp = ClassPool.getDefault();
+            // Make it see bootstrap's BlockHoundRuntime class
+            cp.appendClassPath(new LoaderClassPath(BlockHound.class.getClassLoader()));
         }
 
         @Override
@@ -310,9 +315,9 @@ public class BlockHound {
             if (methods == null) {
                 return classfileBuffer;
             }
+            ClassPath classPath = new LoaderClassPath(loader);
             try {
-                ClassPool cp = ClassPool.getDefault();
-                cp.appendClassPath(new LoaderClassPath(loader));
+                cp.appendClassPath(classPath);
 
                 CtClass ct = cp.makeClass(new ByteArrayInputStream(classfileBuffer));
 
@@ -362,10 +367,15 @@ public class BlockHound {
                     }
                 }
 
-                return ct.toBytecode();
+                byte[] bytes = ct.toBytecode();
+                ct.detach();
+                return bytes;
             }
             catch (Throwable e) {
                 e.printStackTrace();
+            }
+            finally {
+                cp.removeClassPath(classPath);
             }
 
             return classfileBuffer;
