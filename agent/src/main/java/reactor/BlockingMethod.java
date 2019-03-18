@@ -16,7 +16,7 @@
 
 package reactor;
 
-import static net.bytebuddy.jar.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Opcodes.ACC_STATIC;
 
 public class BlockingMethod {
 

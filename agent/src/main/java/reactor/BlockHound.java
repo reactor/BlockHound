@@ -16,12 +16,9 @@
 
 package reactor;
 
-import javassist.*;
-import javassist.bytecode.AttributeInfo;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
@@ -32,7 +29,6 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -42,11 +38,10 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static java.util.Collections.singleton;
-import static net.bytebuddy.jar.asm.Opcodes.*;
 
 public class BlockHound {
 
-    private static final String PREFIX = "$$BlockHound$$_";
+    static final String PREFIX = "$$BlockHound$$_";
 
     private static final AtomicBoolean INITIALIZED = new AtomicBoolean(false);
 
@@ -250,30 +245,6 @@ public class BlockHound {
                     }
                 }));
 
-                ClassFileTransformer transformer = new BlockingClassFileTransformer(blockingMethods);
-
-                instrumentation.addTransformer(transformer, true);
-                instrumentation.setNativeMethodPrefix(transformer, PREFIX);
-
-                for (Class clazz : instrumentation.getAllLoadedClasses()) {
-                    try {
-                        String canonicalName = clazz.getCanonicalName();
-                        if (canonicalName == null) {
-                            continue;
-                        }
-                        if (blockingMethods.containsKey(canonicalName.replace(".", "/"))) {
-                            instrumentation.retransformClasses(clazz);
-                        }
-                    }
-                    catch (NoClassDefFoundError e) {
-                        continue;
-                    }
-                }
-
-                Field initializedField = runtimeClass.getDeclaredField("initialized");
-                initializedField.setAccessible(true);
-                initializedField.setBoolean(null, true);
-
                 Field blockingMethodConsumerField = runtimeClass.getDeclaredField("blockingMethodConsumer");
                 blockingMethodConsumerField.setAccessible(true);
                 blockingMethodConsumerField.set(null, (Consumer<Object[]>) args -> {
@@ -286,99 +257,36 @@ public class BlockHound {
                 Field threadPredicateField = runtimeClass.getDeclaredField("threadPredicate");
                 threadPredicateField.setAccessible(true);
                 threadPredicateField.set(null, threadPredicate);
+
+                instrument(instrumentation);
             }
             catch (Throwable e) {
                 throw new RuntimeException(e);
             }
         }
-    }
 
-    /**
-     * TODO use ByteBuddy instead of Javassist
-     */
-    private static class BlockingClassFileTransformer implements ClassFileTransformer {
+        private void instrument(Instrumentation instrumentation) throws Exception {
+            ClassFileTransformer transformer = new ASMClassFileTransformer(blockingMethods);
+            instrumentation.addTransformer(transformer, true);
+            instrumentation.setNativeMethodPrefix(transformer, PREFIX);
 
-        private final Map<String, Map<String, Set<String>>> blockingMethods;
-
-        private final ClassPool cp;
-
-        BlockingClassFileTransformer(Map<String, Map<String, Set<String>>> blockingMethods) {
-            this.blockingMethods = blockingMethods;
-            cp = ClassPool.getDefault();
-            // Make it see bootstrap's BlockHoundRuntime class
-            cp.appendClassPath(new LoaderClassPath(BlockHound.class.getClassLoader()));
-        }
-
-        @Override
-        public byte[] transform(ClassLoader loader, String className, Class<?> classBeingRedefined, ProtectionDomain protectionDomain, byte[] classfileBuffer) {
-            Map<String, Set<String>> methods = blockingMethods.get(className);
-            if (methods == null) {
-                return classfileBuffer;
-            }
-            ClassPath classPath = new LoaderClassPath(loader);
-            try {
-                cp.appendClassPath(classPath);
-
-                CtClass ct = cp.makeClass(new ByteArrayInputStream(classfileBuffer));
-
-                for (Map.Entry<String, Set<String>> methodEntry : methods.entrySet()) {
-                    String methodName = methodEntry.getKey();
-
-                    for (String signature : methodEntry.getValue()) {
-                        final CtMethod oldMethod;
-                        try {
-                            oldMethod = ct.getMethod(methodName, signature);
-                        }
-                        catch (NotFoundException e) {
-                            continue;
-                        }
-
-                        CtMethod newMethod = oldMethod;
-                        if ((oldMethod.getModifiers() & ACC_NATIVE) != 0) {
-                            ct.removeMethod(oldMethod);
-                            oldMethod.setName(PREFIX + oldMethod.getName());
-
-                            newMethod = CtNewMethod.delegator(oldMethod, ct);
-                            for (AttributeInfo attribute : oldMethod.getMethodInfo2().getAttributes()) {
-                                if (attribute.getName().equals("RuntimeVisibleAnnotations")) {
-                                    newMethod.getMethodInfo2().getAttributes().add(attribute);
+            instrumentation.retransformClasses(
+                    Stream
+                            .of(instrumentation.getAllLoadedClasses())
+                            .filter(it -> {
+                                try {
+                                    String canonicalName = it.getCanonicalName();
+                                    if (canonicalName == null) {
+                                        return false;
+                                    }
+                                    return blockingMethods.containsKey(canonicalName.replace(".", "/"));
                                 }
-                            }
-
-                            newMethod.setName(methodName);
-                            newMethod.setModifiers(oldMethod.getModifiers() & ~ACC_NATIVE);
-                            ct.addMethod(newMethod);
-
-                            oldMethod.setModifiers(ACC_NATIVE | ACC_PRIVATE | ACC_FINAL | (oldMethod.getModifiers() & ACC_STATIC));
-                            // HotSpotIntrinsicCandidate...
-                            oldMethod.getMethodInfo2().removeAttribute("RuntimeVisibleAnnotations");
-
-                            ct.addMethod(oldMethod);
-                        }
-
-                        newMethod.insertBefore("{" +
-                                "reactor.BlockHoundRuntime.checkBlocking(" +
-                                "\"" + className.replace("/", ".") + "\"," +
-                                "\"" + methodName + "\"," +
-                                newMethod.getModifiers() +
-                                ");" +
-                                "}"
-                        );
-                    }
-                }
-
-                byte[] bytes = ct.toBytecode();
-                ct.detach();
-                return bytes;
-            }
-            catch (Throwable e) {
-                e.printStackTrace();
-            }
-            finally {
-                cp.removeClassPath(classPath);
-            }
-
-            return classfileBuffer;
+                                catch (NoClassDefFoundError e) {
+                                    return false;
+                                }
+                            })
+                            .toArray(Class[]::new)
+            );
         }
     }
 

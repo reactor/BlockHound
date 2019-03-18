@@ -31,8 +31,6 @@ public class BlockHoundRuntime {
 
     private static native boolean isBlocking();
 
-    private static volatile boolean initialized = false;
-
     @SuppressWarnings("unused")
     private static volatile Consumer<Object[]> blockingMethodConsumer;
 
@@ -41,7 +39,7 @@ public class BlockHoundRuntime {
 
     @SuppressWarnings("unused")
     public static void checkBlocking(String className, String methodName, int modifiers) {
-        if (initialized && isBlocking()) {
+        if (isBlocking()) {
             blockingMethodConsumer.accept(new Object[] { className, methodName, modifiers });
         }
     }
