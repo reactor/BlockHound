@@ -59,7 +59,7 @@ class ASMClassFileTransformer implements ClassFileTransformer {
             byte[] classfileBuffer
     ) {
         if (!blockingMethods.containsKey(className)) {
-            return classfileBuffer;
+            return null;
         }
 
         ClassReader cr = new ClassReader(classfileBuffer);
