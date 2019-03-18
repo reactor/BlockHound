@@ -1,0 +1,49 @@
+plugins {
+    id "java"
+    id "maven-publish"
+}
+
+sourceCompatibility = targetCompatibility = 8
+
+repositories {
+    jcenter()
+}
+
+test {
+    useJUnitPlatform()
+
+    forkEvery = 1
+    maxParallelForks = 1
+}
+
+dependencies {
+    compileOnly 'com.google.auto.service:auto-service:1.0-rc4'
+    compile project(path: ":agent", configuration: 'shadow')
+
+    compileOnly 'org.junit.platform:junit-platform-launcher:1.4.0'
+
+    testCompile 'org.assertj:assertj-core:3.11.1'
+    testCompile 'io.projectreactor:reactor-core:3.2.2.RELEASE'
+
+    testCompile 'org.junit.jupiter:junit-jupiter-api:5.4.0'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.4.0'
+
+    // FIXME remove it once Sam explains how to use it properly
+    testRuntime 'org.junit.platform:junit-platform-launcher:1.4.0'
+}
+
+task sourcesJar(type: Jar) {
+    classifier 'sources'
+    from sourceSets.main.allJava
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) { publication ->
+            from components.java
+            artifact sourcesJar
+
+            artifactId 'blockhound-junit-platform'
+        }
+    }
+}
