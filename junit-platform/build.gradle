@@ -27,6 +27,7 @@ dependencies {
 
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.4.0'
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.4.0'
+    testRuntime 'org.junit.platform:junit-platform-launcher:1.0.0'
 }
 
 task sourcesJar(type: Jar) {
