@@ -13,6 +13,7 @@ test {
     // This is not required in normal testing scenarios
     forkEvery = 1
     maxParallelForks = 1
+    jvmArgs = ["-Xverify:all"]
 }
 
 dependencies {

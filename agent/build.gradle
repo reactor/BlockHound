@@ -23,6 +23,10 @@ shadowJar {
         attributes('Can-Set-Native-Method-Prefix': 'true')
         attributes('Can-Redefine-Classes': 'true')
     }
+
+    exclude 'module-info.class'
+    exclude 'META-INF/maven/**'
+    exclude 'reactor/shaded/META-INF/**'
 }
 
 project.tasks.build.dependsOn(shadowJar)
@@ -41,14 +45,14 @@ repositories {
 dependencies {
     compileOnly 'com.google.auto.service:auto-service:1.0-rc4'
 
-    compile 'net.bytebuddy:byte-buddy:1.9.6'
-    compile 'net.bytebuddy:byte-buddy-agent:1.9.6'
+    compile 'org.ow2.asm:asm:7.1'
+    compile 'org.ow2.asm:asm-commons:7.1', {
+        exclude(group: "org.ow2.asm", module: "*")
+    }
+    compile 'net.bytebuddy:byte-buddy-agent:1.9.10'
 
     compileOnly 'io.projectreactor:reactor-core:3.2.5.RELEASE'
     compileOnly 'io.reactivex.rxjava2:rxjava:2.2.5'
-
-    // TODO use ByteBuddy only
-    compile 'org.javassist:javassist:3.24.0-GA'
 }
 
 task sourcesJar(type: Jar) {
