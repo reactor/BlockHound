@@ -5,8 +5,8 @@ Download it from repo.spring.io or Maven Central repositories (stable releases o
 
 ```groovy
 repositories {
-  maven { url 'http://repo.spring.io/milestone' }
-  // maven { url 'http://repo.spring.io/snapshot' }
+  maven { url 'https://repo.spring.io/milestone' }
+  // maven { url 'https://repo.spring.io/snapshot' }
 }
 
 dependencies {

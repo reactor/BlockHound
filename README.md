@@ -38,8 +38,8 @@ Download it from Maven Central repositories (stable releases only) or repo.sprin
 
 ```groovy
 repositories {
-  maven { url 'http://repo.spring.io/milestone' }
-  // maven { url 'http://repo.spring.io/snapshot' }
+  maven { url 'https://repo.spring.io/milestone' }
+  // maven { url 'https://repo.spring.io/snapshot' }
 }
 
 dependencies {
@@ -60,4 +60,4 @@ See [the docs](./docs/README.md).
 -------------------------------------
 _Licensed under [Apache Software License 2.0](www.apache.org/licenses/LICENSE-2.0)_
 
-_Sponsored by [Pivotal](http://pivotal.io)_
+_Sponsored by [Pivotal](https://pivotal.io)_
