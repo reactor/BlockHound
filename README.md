@@ -1,7 +1,8 @@
 # BlockHound (experimental)
 
 [![Travis CI](https://travis-ci.org/reactor/BlockHound.svg?branch=master)](https://travis-ci.org/reactor/BlockHound)
-[![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/blockhound/maven-metadata.xml.svg)](https://repo.spring.io/snapshot/io/projectreactor/blockhound/)
+[![](https://img.shields.io/badge/dynamic/xml.svg?label=Milestone&color=blue&query=%2F%2Fmetadata%2Fversion&url=https%3A%2F%2Frepo.spring.io%2Fmilestone%2Fio%2Fprojectreactor%2Ftools%2Fblockhound%2Fmaven-metadata.xml)](https://repo.spring.io/milestone/io/projectreactor/tools/blockhound/)
+[![](https://img.shields.io/badge/dynamic/xml.svg?label=Snapshot&color=orange&query=%2F%2Fmetadata%2Fversion&url=https%3A%2F%2Frepo.spring.io%2Fsnapshot%2Fio%2Fprojectreactor%2Ftools%2Fblockhound%2Fmaven-metadata.xml)](https://repo.spring.io/snapshot/io/projectreactor/tools/blockhound/)
 
 Java agent to detect blocking calls from non-blocking threads.
 
@@ -37,15 +38,21 @@ Download it from Maven Central repositories (stable releases only) or repo.sprin
 
 ```groovy
 repositories {
-  maven { url 'http://repo.spring.io/snapshot' }
+  maven { url 'https://repo.spring.io/milestone' }
+  // maven { url 'https://repo.spring.io/snapshot' }
 }
 
 dependencies {
-  testCompile 'io.projectreactor:blockhound:$LATEST_SNAPSHOT'
+  testCompile 'io.projectreactor.tools:blockhound:$LATEST_RELEASE'
+  // testCompile 'io.projectreactor.tools:blockhound:$LATEST_SNAPSHOT'
 }
 ```
-Where `$LATEST_SNAPSHOT` is:  
-![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/blockhound/maven-metadata.xml.svg)
+Where:
+
+|||
+|-|-|
+|`$LATEST_RELEASE`|[![](https://img.shields.io/badge/dynamic/xml.svg?label=&color=blue&query=%2F%2Fmetadata%2Fversion&url=https%3A%2F%2Frepo.spring.io%2Fmilestone%2Fio%2Fprojectreactor%2Ftools%2Fblockhound%2Fmaven-metadata.xml)](https://repo.spring.io/milestone/io/projectreactor/tools/blockhound/)|
+|`$LATEST_SNAPSHOT`|[![](https://img.shields.io/badge/dynamic/xml.svg?label=&color=orange&query=%2F%2Fmetadata%2Fversion&url=https%3A%2F%2Frepo.spring.io%2Fsnapshot%2Fio%2Fprojectreactor%2Ftools%2Fblockhound%2Fmaven-metadata.xml)](https://repo.spring.io/snapshot/io/projectreactor/tools/blockhound/)|
 
 # Quick Start
 See [the docs](./docs/README.md).
@@ -53,4 +60,4 @@ See [the docs](./docs/README.md).
 -------------------------------------
 _Licensed under [Apache Software License 2.0](www.apache.org/licenses/LICENSE-2.0)_
 
-_Sponsored by [Pivotal](http://pivotal.io)_
+_Sponsored by [Pivotal](https://pivotal.io)_

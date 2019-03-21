@@ -5,15 +5,21 @@ Download it from repo.spring.io or Maven Central repositories (stable releases o
 
 ```groovy
 repositories {
-  maven { url 'http://repo.spring.io/snapshot' }
+  maven { url 'https://repo.spring.io/milestone' }
+  // maven { url 'https://repo.spring.io/snapshot' }
 }
 
 dependencies {
-  testCompile 'io.projectreactor:blockhound:$LATEST_SNAPSHOT'
+  testCompile 'io.projectreactor.tools:blockhound:$LATEST_RELEASE'
+  // testCompile 'io.projectreactor.tools:blockhound:$LATEST_SNAPSHOT'
 }
 ```
-Where `$LATEST_SNAPSHOT` is:  
-![](https://img.shields.io/maven-metadata/v/https/repo.spring.io/snapshot/io/projectreactor/blockhound/maven-metadata.xml.svg)
+Where:
+
+|||
+|-|-|
+|`$LATEST_RELEASE`|[![](https://img.shields.io/badge/dynamic/xml.svg?label=&color=blue&query=%2F%2Fmetadata%2Fversion&url=https%3A%2F%2Frepo.spring.io%2Fmilestone%2Fio%2Fprojectreactor%2Ftools%2Fblockhound%2Fmaven-metadata.xml)](https://repo.spring.io/milestone/io/projectreactor/tools/blockhound/)|
+|`$LATEST_SNAPSHOT`|[![](https://img.shields.io/badge/dynamic/xml.svg?label=&color=orange&query=%2F%2Fmetadata%2Fversion&url=https%3A%2F%2Frepo.spring.io%2Fsnapshot%2Fio%2Fprojectreactor%2Ftools%2Fblockhound%2Fmaven-metadata.xml)](https://repo.spring.io/snapshot/io/projectreactor/tools/blockhound/)|
 
 ## Installation
 BlockHound is a JVM agent. You need to "install" it before it starts detecting the issues:
