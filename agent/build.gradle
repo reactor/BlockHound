@@ -16,7 +16,7 @@ shadowJar {
     from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/osx/libBlockHound.dylib"
 
     dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundWindowsSharedLibrary"))
-    from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/windows/libBlockHound.dll"
+    from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/windows/BlockHound.dll"
 
     manifest {
         attributes('Can-Retransform-Classes': 'true')
