@@ -16,7 +16,10 @@ shadowJar {
     from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/osx/libBlockHound.dylib"
 
     dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundWindowsSharedLibrary"))
-    from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/windows/BlockHound.dll"
+    from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/windows/libBlockHound.dll"
+
+    // See https://github.com/AdoptOpenJDK/openjdk-jdk8u/blob/aa318070b27849f1fe00d14684b2a40f7b29bf79/jdk/src/windows/javavm/export/jvm_md.h#L42
+    rename "libBlockHound.dll", "BlockHound.dll"
 
     manifest {
         attributes('Can-Retransform-Classes': 'true')
