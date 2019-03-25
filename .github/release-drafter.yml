@@ -1,0 +1,10 @@
+template: |
+    # What's Changed
+    $CHANGES
+categories:
+  - title: 🚀 Features / Enhancements
+    label: type/enhancement
+  - title: 🐛 Bug Fixes
+    label: type/bug
+  - title: 📖 Documentation
+    label: type/docs
