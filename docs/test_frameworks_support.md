@@ -1,4 +1,4 @@
-# Testing Framework Support
+# Supported Testing Frameworks
 
 ## JUnit Platform (JUnit Jupiter or JUnit Vintage)
 
