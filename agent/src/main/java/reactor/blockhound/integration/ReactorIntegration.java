@@ -23,6 +23,7 @@ import reactor.core.scheduler.Schedulers;
 import reactor.blockhound.integration.util.TaskWrappingScheduledExecutorService;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 @AutoService(BlockHoundIntegration.class)
 public class ReactorIntegration implements BlockHoundIntegration {
@@ -35,6 +36,9 @@ public class ReactorIntegration implements BlockHoundIntegration {
         catch (ClassNotFoundException ignored) {
             return;
         }
+
+        // `ScheduledThreadPoolExecutor$DelayedWorkQueue.offer` parks the Thread with Unsafe#park.
+        builder.allowBlockingCallsInside(ScheduledThreadPoolExecutor.class.getName(), "scheduleAtFixedRate");
 
         builder.nonBlockingThreadPredicate(current -> current.or(NonBlocking.class::isInstance));
 
