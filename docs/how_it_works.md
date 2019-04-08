@@ -32,7 +32,7 @@ public static native void sleep(long millis);
 
 The method is public and we can't instrument the wrapping Java method. Instead, we relocate the old native method:
 ```java
-public static native void $$BlockHound$$_sleep(long millis);
+private static native void $$BlockHound$$_sleep(long millis);
 ```
 
 Then we create a new Java method, with exactly same signature as the old one, delegating to the old implementation:
