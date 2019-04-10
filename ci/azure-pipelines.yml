@@ -13,8 +13,8 @@ jobs:
       tasks: 'build'
   - task: PublishPipelineArtifact@0
     inputs:
-      artifactName: 'workspace'
-      targetPath: '.'
+      artifactName: 'native-agent-build'
+      targetPath: 'native-agent/build/'
 - job: test
   dependsOn: build
   displayName: Test
@@ -31,14 +31,14 @@ jobs:
   steps:
   - task: DownloadPipelineArtifact@0
     inputs:
-      artifactName: 'workspace'
+      artifactName: 'native-agent-build'
       targetPath: $(System.DefaultWorkingDirectory)
   - task: Gradle@2
     displayName: Gradle build
     inputs:
       gradleWrapperFile: 'gradlew'
       jdkVersionOption: '1.11'
-      options: '--no-daemon -x :native-agent:externalBuildBlockHoundLinuxSharedLibrary -x :native-agent:externalBuildBlockHoundOsxSharedLibrary -x :native-agent:externalBuildBlockHoundWindowsSharedLibrary'
+      options: '--no-daemon -x :native-agent:check -x :native-agent:externalBuildBlockHoundLinuxSharedLibrary -x :native-agent:externalBuildBlockHoundOsxSharedLibrary -x :native-agent:externalBuildBlockHoundWindowsSharedLibrary'
       tasks: 'check'
       publishJUnitResults: true
       testResultsFiles: '**/TEST-*.xml'
