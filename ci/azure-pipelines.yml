@@ -3,6 +3,7 @@ steps:
   displayName: Build
   inputs:
     gradleWrapperFile: 'gradlew'
+    jdkVersionOption: '1.11'
     options: '--no-daemon'
     tasks: 'build'
     publishJUnitResults: true
