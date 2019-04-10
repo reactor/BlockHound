@@ -1,10 +1,14 @@
-steps:
-- task: Gradle@2
+jobs:
+- job: build
   displayName: Build
-  inputs:
-    gradleWrapperFile: 'gradlew'
-    jdkVersionOption: '1.11'
-    options: '--no-daemon'
-    tasks: 'build'
-    publishJUnitResults: true
-    testResultsFiles: '**/TEST-*.xml'
+  pool: ubuntu-16.04
+  steps:
+  - task: Gradle@2
+    displayName: Gradle build
+    inputs:
+      gradleWrapperFile: 'gradlew'
+      jdkVersionOption: '1.11'
+      options: '--no-daemon'
+      tasks: 'build'
+      publishJUnitResults: true
+      testResultsFiles: '**/TEST-*.xml'
