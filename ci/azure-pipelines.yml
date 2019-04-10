@@ -3,6 +3,8 @@ jobs:
   displayName: Build
   pool:
     name: 'Hosted Ubuntu 1604'
+  workspace:
+    clean: all
   steps:
   - task: Gradle@2
     displayName: Gradle build
