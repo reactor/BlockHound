@@ -28,6 +28,8 @@ jobs:
         poolName: 'Hosted VS2017'
   pool:
     name: $(poolName)
+  workspace:
+    clean: all
   steps:
   - task: DownloadPipelineArtifact@0
     inputs:
