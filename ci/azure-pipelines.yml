@@ -13,6 +13,10 @@ jobs:
       tasks: 'build'
       publishJUnitResults: true
       testResultsFiles: '**/TEST-*.xml'
+  - task: PublishPipelineArtifact@0
+    inputs:
+      artifactName: 'workspace'
+      targetPath: '.'
 - job: test
   displayName: Test
   strategy:
@@ -26,6 +30,10 @@ jobs:
   pool:
     name: $(poolName)
   steps:
+  - task: DownloadPipelineArtifact@0
+    inputs:
+      artifactName: 'workspace'
+      targetPath: $(System.DefaultWorkingDirectory)
   - task: Gradle@2
     displayName: Gradle build
     inputs:
