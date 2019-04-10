@@ -2,7 +2,7 @@ jobs:
 - job: build
   displayName: Build
   pool:
-    name: 'ubuntu-16.04'
+    name: 'Hosted Ubuntu 1604'
   steps:
   - task: Gradle@2
     displayName: Gradle build
