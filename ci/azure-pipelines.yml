@@ -42,7 +42,7 @@ jobs:
     inputs:
       gradleWrapperFile: 'gradlew'
       jdkVersionOption: '1.11'
-      options: '--no-daemon -x :agent:check -x :native-agent:check'
+      options: '--no-daemon -x :agent:check -x :native-agent:check -x :native-agent:externalBuildBlockHoundLinuxSharedLibrary -x :native-agent:externalBuildBlockHoundOsxSharedLibrary -x :native-agent:externalBuildBlockHoundWindowsSharedLibrary'
       tasks: 'check'
       publishJUnitResults: true
       testResultsFiles: '**/TEST-*.xml'
