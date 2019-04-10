@@ -164,7 +164,7 @@ public class ReactorTest {
         });
 
         tests.put("java.lang.ProcessImpl#forkAndExec", () -> {
-            var processBuilder = new ProcessBuilder("java");
+            var processBuilder = new ProcessBuilder("date");
             return Mono.fromCallable(() -> {
                 processBuilder.start();
                 return "";
