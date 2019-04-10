@@ -1,0 +1,9 @@
+steps:
+- task: Gradle@2
+  displayName: Build
+  inputs:
+    gradleWrapperFile: 'gradlew'
+    options: '--no-daemon'
+    tasks: 'build'
+    publishJUnitResults: true
+    testResultsFiles: '**/TEST-*.xml'
