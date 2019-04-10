@@ -9,7 +9,29 @@ jobs:
     inputs:
       gradleWrapperFile: 'gradlew'
       jdkVersionOption: '1.11'
-      options: '--no-daemon'
+      options: '--no-daemon -x check'
       tasks: 'build'
+      publishJUnitResults: true
+      testResultsFiles: '**/TEST-*.xml'
+- job: test
+  displayName: Test
+  strategy:
+    matrix:
+      linux:
+        poolName: 'Hosted Ubuntu 1604'
+      mac:
+        poolName: 'Hosted macOS'
+      windows:
+        poolName: 'Hosted VS2017'
+  pool:
+    name: $(poolName)
+  steps:
+  - task: Gradle@2
+    displayName: Gradle build
+    inputs:
+      gradleWrapperFile: 'gradlew'
+      jdkVersionOption: '1.11'
+      options: '--no-daemon'
+      tasks: 'check'
       publishJUnitResults: true
       testResultsFiles: '**/TEST-*.xml'
