@@ -15,8 +15,8 @@ jobs:
       tasks: 'build'
   - task: PublishPipelineArtifact@0
     inputs:
-      artifactName: 'agent-build'
-      targetPath: 'agent/build/'
+      artifactName: 'workspace'
+      targetPath: '.'
 - job: test
   dependsOn: build
   displayName: Test
@@ -35,7 +35,7 @@ jobs:
   steps:
   - task: DownloadPipelineArtifact@0
     inputs:
-      artifactName: 'agent-build'
+      artifactName: 'workspace'
       targetPath: $(System.DefaultWorkingDirectory)
   - task: Gradle@2
     displayName: Gradle build
