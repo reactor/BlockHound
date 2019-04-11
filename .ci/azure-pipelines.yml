@@ -1,3 +1,8 @@
+trigger:
+  branches: { include: [ master ] }
+  tags: { include: [ "*" ] }
+pr: [ master ]
+
 jobs:
 - job: build
   displayName: Build
