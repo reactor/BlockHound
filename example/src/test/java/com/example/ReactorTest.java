@@ -164,7 +164,9 @@ public class ReactorTest {
         });
 
         tests.put("java.lang.ProcessImpl#forkAndExec", () -> {
-            var processBuilder = new ProcessBuilder("java");
+            // TODO find which implementation is used on Windows
+            Assumptions.assumeThat(System.getProperty("os.name").toLowerCase()).doesNotContain("win");
+            var processBuilder = new ProcessBuilder("date");
             return Mono.fromCallable(() -> {
                 processBuilder.start();
                 return "";
@@ -180,6 +182,8 @@ public class ReactorTest {
         });
 
         tests.put("java.net.PlainDatagramSocketImpl#send", () -> {
+            // TODO find which implementation is used on Windows
+            Assumptions.assumeThat(System.getProperty("os.name").toLowerCase()).doesNotContain("win");
             var socket = new DatagramSocket();
             socket.connect(InetAddress.getByName("8.8.8.8"), 53);
             return Mono.fromCallable(() -> {

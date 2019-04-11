@@ -1,0 +1,48 @@
+jobs:
+- job: build
+  displayName: Build
+  pool:
+    name: 'Hosted Ubuntu 1604'
+  workspace:
+    clean: all
+  steps:
+  - task: Gradle@2
+    displayName: Gradle build
+    inputs:
+      gradleWrapperFile: 'gradlew'
+      jdkVersionOption: '1.11'
+      options: '--no-daemon -x check'
+      tasks: 'build'
+  - task: PublishPipelineArtifact@0
+    inputs:
+      artifactName: 'workspace'
+      targetPath: '.'
+- job: test
+  dependsOn: build
+  displayName: Test
+  strategy:
+    matrix:
+      linux:
+        poolName: 'Hosted Ubuntu 1604'
+      mac:
+        poolName: 'Hosted macOS'
+      windows:
+        poolName: 'Hosted VS2017'
+  pool:
+    name: $(poolName)
+  workspace:
+    clean: all
+  steps:
+  - task: DownloadPipelineArtifact@0
+    inputs:
+      artifactName: 'workspace'
+      targetPath: $(System.DefaultWorkingDirectory)
+  - task: Gradle@2
+    displayName: Gradle build
+    inputs:
+      gradleWrapperFile: 'gradlew'
+      jdkVersionOption: '1.11'
+      options: '--no-daemon -x :agent:check -x :native-agent:check -x :native-agent:externalBuildBlockHoundLinuxSharedLibrary -x :native-agent:externalBuildBlockHoundOsxSharedLibrary -x :native-agent:externalBuildBlockHoundWindowsSharedLibrary'
+      tasks: 'check'
+      publishJUnitResults: true
+      testResultsFiles: '**/TEST-*.xml'
