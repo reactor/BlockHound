@@ -16,7 +16,7 @@ jobs:
       gradleWrapperFile: 'gradlew'
       jdkVersionOption: '1.11'
       options: '--no-daemon -x check'
-      tasks: 'build'
+      tasks: 'build javadoc'
   - task: PublishPipelineArtifact@0
     inputs:
       artifactName: 'workspace'

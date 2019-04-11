@@ -3,7 +3,7 @@ parameters:
   version: ''
 
 steps:
-- bash: ./gradlew publish -Pversion=$GRADLE_VERSION
+- bash: ./gradlew --no-daemon -Pversion=$GRADLE_VERSION publish
   env:
     GRADLE_VERSION: ${{ parameters.version }}
     GRADLE_PUBLISH_REPO_URL: https://repo.spring.io/${{ parameters.repoId }}

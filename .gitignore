@@ -12,7 +12,9 @@ build/
 
 cmake-build-*/
 
+out/
 
+.settings/
 .project
 .classpath
 bin/
