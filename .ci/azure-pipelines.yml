@@ -1,6 +1,5 @@
 trigger:
   branches: { include: [ master ] }
-  tags: { include: [ "*" ] }
 pr: [ master ]
 
 jobs:
@@ -22,6 +21,7 @@ jobs:
     inputs:
       artifactName: 'workspace'
       targetPath: '.'
+
 - job: test
   dependsOn: build
   displayName: Test
@@ -51,3 +51,21 @@ jobs:
       tasks: 'check'
       publishJUnitResults: true
       testResultsFiles: '**/TEST-*.xml'
+
+- job: publish
+  dependsOn: test
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  displayName: Publish SNAPSHOT
+  pool:
+    name: 'Hosted Ubuntu 1604'
+  workspace:
+    clean: all
+  steps:
+  - task: DownloadPipelineArtifact@0
+    inputs:
+      artifactName: 'workspace'
+      targetPath: $(System.DefaultWorkingDirectory)
+  - template: .ci/templates/publish.yml
+    parameters:
+      repoId: libs-snapshot-local
+      version: 1.0.0.BUILD-SNAPSHOT

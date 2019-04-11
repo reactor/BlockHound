@@ -1,0 +1,11 @@
+parameters:
+  repoId: ''
+  version: ''
+
+steps:
+- bash: ./gradlew publish -Pversion=$GRADLE_VERSION
+  env:
+    GRADLE_VERSION: ${{ parameters.version }}
+    GRADLE_PUBLISH_REPO_URL: https://repo.spring.io/${{ parameters.repoId }}
+    GRADLE_PUBLISH_MAVEN_USER: $(artifactory.username)
+    GRADLE_PUBLISH_MAVEN_PASSWORD: $(artifactory.password)

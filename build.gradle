@@ -9,7 +9,11 @@ subprojects {
         project.publishing {
             repositories {
                 maven {
-                    url = uri("$rootProject.buildDir/repo")
+                    url System.getenv('GRADLE_PUBLISH_REPO_URL')
+                    credentials {
+                        username = System.getenv('GRADLE_PUBLISH_MAVEN_USER')
+                        password = System.getenv('GRADLE_PUBLISH_MAVEN_PASSWORD')
+                    }
                 }
             }
         }
