@@ -65,7 +65,7 @@ jobs:
     inputs:
       artifactName: 'workspace'
       targetPath: $(System.DefaultWorkingDirectory)
-  - template: .ci/templates/publish.yml
+  - template: templates/publish.yml
     parameters:
       repoId: libs-snapshot-local
       version: 1.0.0.BUILD-SNAPSHOT
