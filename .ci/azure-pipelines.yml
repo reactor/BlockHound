@@ -54,7 +54,7 @@ jobs:
 
 - job: publish
   dependsOn: test
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+  # condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Publish SNAPSHOT
   pool:
     name: 'Hosted Ubuntu 1604'
