@@ -17,6 +17,6 @@ jobs:
   - template: templates/publish.yml
     parameters:
       version: $(version)
-      ${{ if not(endsWith(version, '.RELEASE')) }}:
+      ${{ if not(endsWith(variables['version'], '.RELEASE')) }}:
         repoId: libs-milestone-local
       # TODO support release publishing
