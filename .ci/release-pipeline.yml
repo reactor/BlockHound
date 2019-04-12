@@ -1,0 +1,22 @@
+trigger:
+  batch: false
+  pr: none
+  branches:
+    exclude: [ '*' ]
+  tags:
+    include: [ '*' ]
+
+jobs:
+- job: publish
+  displayName: Publish
+  pool:
+    name: 'Hosted Ubuntu 1604'
+  steps:
+  - script: |
+      echo "##vso[task.setvariable variable=version]$(git tag --points-at HEAD)"
+  - template: templates/publish.yml
+    parameters:
+      version: $(version)
+      ${{ if not(endsWith(version, '.RELEASE')) }}:
+        repoId: libs-milestone-local
+      # TODO support release publishing
