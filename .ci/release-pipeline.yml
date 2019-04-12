@@ -1,6 +1,6 @@
+pr: none
 trigger:
   batch: false
-  pr: none
   branches:
     exclude: [ '*' ]
   tags:
