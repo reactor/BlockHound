@@ -42,7 +42,7 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *) {
     return JNI_VERSION_1_8;
 }
 
-extern "C" JNIEXPORT void JNICALL Java_reactor_BlockHoundRuntime_markMethod(JNIEnv *env, jobject, jclass clazz, jstring hookMethodName, jboolean allowed) {
+extern "C" JNIEXPORT void JNICALL Java_reactor_blockhound_BlockHoundRuntime_markMethod(JNIEnv *env, jobject, jclass clazz, jstring hookMethodName, jboolean allowed) {
     const char *hookMethodChars = env->GetStringUTFChars(hookMethodName, JNI_FALSE);
 
     jint methodCount;
@@ -63,7 +63,7 @@ extern "C" JNIEXPORT void JNICALL Java_reactor_BlockHoundRuntime_markMethod(JNIE
     }
 }
 
-extern "C" JNIEXPORT jboolean JNICALL Java_reactor_BlockHoundRuntime_isBlocking(JNIEnv *env) {
+extern "C" JNIEXPORT jboolean JNICALL Java_reactor_blockhound_BlockHoundRuntime_isBlocking(JNIEnv *env) {
     jthread thread;
     jvmti->GetCurrentThread(&thread);
 
@@ -81,7 +81,7 @@ extern "C" JNIEXPORT jboolean JNICALL Java_reactor_BlockHoundRuntime_isBlocking(
         // Since we call back into Java code, it might call a blocking method.
         // However, since "isNonBlocking" is false by default,
         // it should be safe and not create a recursion problem.
-        jclass runtimeClass = env->FindClass("Lreactor/BlockHoundRuntime;");
+        jclass runtimeClass = env->FindClass("Lreactor/blockhound/BlockHoundRuntime;");
         jmethodID isBlockingThreadMethodId = env->GetStaticMethodID(runtimeClass, "isBlockingThread", "(Ljava/lang/Thread;)Z");
         t->isNonBlocking = env->CallStaticBooleanMethod(runtimeClass, isBlockingThreadMethodId, thread) == JNI_TRUE;
     }
