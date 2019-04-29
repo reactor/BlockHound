@@ -17,7 +17,7 @@
 package com.example;
 
 import org.junit.Test;
-import reactor.BlockHound;
+import reactor.blockhound.BlockHound;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 

@@ -17,7 +17,7 @@
 package reactor.blockhound.integration;
 
 import com.google.auto.service.AutoService;
-import reactor.BlockHound;
+import reactor.blockhound.BlockHound;
 import reactor.core.scheduler.NonBlocking;
 import reactor.core.scheduler.Schedulers;
 import reactor.blockhound.integration.util.TaskWrappingScheduledExecutorService;
