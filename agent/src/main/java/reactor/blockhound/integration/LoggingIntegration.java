@@ -17,7 +17,7 @@
 package reactor.blockhound.integration;
 
 import com.google.auto.service.AutoService;
-import reactor.BlockHound;
+import reactor.blockhound.BlockHound;
 
 @AutoService(BlockHoundIntegration.class)
 public class LoggingIntegration implements BlockHoundIntegration {

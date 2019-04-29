@@ -20,7 +20,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Single;
 import io.reactivex.exceptions.CompositeException;
 import org.junit.Test;
-import reactor.BlockHound;
+import reactor.blockhound.BlockHound;
 import reactor.core.publisher.Flux;
 
 import java.util.concurrent.TimeUnit;
