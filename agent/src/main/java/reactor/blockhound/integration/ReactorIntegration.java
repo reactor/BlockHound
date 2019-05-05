@@ -17,7 +17,7 @@
 package reactor.blockhound.integration;
 
 import com.google.auto.service.AutoService;
-import reactor.BlockHound;
+import reactor.blockhound.BlockHound;
 import reactor.core.scheduler.NonBlocking;
 import reactor.core.scheduler.Schedulers;
 import reactor.blockhound.integration.util.TaskWrappingScheduledExecutorService;
@@ -35,6 +35,14 @@ public class ReactorIntegration implements BlockHoundIntegration {
         }
         catch (ClassNotFoundException ignored) {
             return;
+        }
+
+        try {
+            // Reactor 3.3.x comes with built-in integration
+            Class.forName("reactor.core.CorePublisher");
+            return;
+        }
+        catch (ClassNotFoundException ignored) {
         }
 
         // `ScheduledThreadPoolExecutor$DelayedWorkQueue.offer` parks the Thread with Unsafe#park.

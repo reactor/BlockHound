@@ -16,7 +16,7 @@
 
 package reactor.blockhound.integration;
 
-import reactor.BlockHound;
+import reactor.blockhound.BlockHound;
 
 public interface BlockHoundIntegration extends Comparable<BlockHoundIntegration> {
 

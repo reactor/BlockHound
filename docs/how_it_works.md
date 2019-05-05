@@ -10,7 +10,7 @@ To detect blocking Java methods, BlockHound alters the bytecode of a method and 
 ```java
 // java.net.Socket
 public void connect(SocketAddress endpoint, int timeout) {
-    reactor.BlockHoundRuntime.checkBlocking(
+    reactor.blockhound.BlockHoundRuntime.checkBlocking(
         "java.net.Socket",
         "connect",
         /*method modifiers*/
@@ -47,7 +47,7 @@ As you can see, the cost of such instrumentation is minimal and only adds 1 hop 
 Now, we add the blocking call detection, the same way as we do it with Java methods:
 ```java
 public static void sleep(long millis) {
-    reactor.BlockHoundRuntime.checkBlocking(
+    reactor.blockhound.BlockHoundRuntime.checkBlocking(
         "java.lang.Thread",
         "sleep",
         /*method modifiers*/

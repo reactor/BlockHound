@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor;
+package reactor.blockhound;
 
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.GeneratorAdapter;

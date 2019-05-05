@@ -20,7 +20,7 @@ import com.google.auto.service.AutoService;
 import io.reactivex.functions.Function;
 import io.reactivex.internal.schedulers.NonBlockingThread;
 import io.reactivex.plugins.RxJavaPlugins;
-import reactor.BlockHound;
+import reactor.blockhound.BlockHound;
 
 @AutoService(BlockHoundIntegration.class)
 public class RxJava2Integration implements BlockHoundIntegration {

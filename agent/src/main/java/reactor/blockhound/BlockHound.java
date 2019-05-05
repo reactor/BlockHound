@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package reactor;
+package reactor.blockhound;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
 import reactor.blockhound.integration.BlockHoundIntegration;
