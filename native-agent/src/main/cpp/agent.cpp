@@ -60,7 +60,10 @@ extern "C" JNIEXPORT void JNICALL Java_reactor_blockhound_BlockHoundRuntime_mark
             el.allowed = allowed == JNI_TRUE;
             hooks[methodId] = el;
         }
+        jvmti->Deallocate((unsigned char*) methodName);
     }
+    env->ReleaseStringUTFChars(hookMethodName, hookMethodChars);
+    jvmti->Deallocate((unsigned char*) methodIds);
 }
 
 extern "C" JNIEXPORT jboolean JNICALL Java_reactor_blockhound_BlockHoundRuntime_isBlocking(JNIEnv *env) {
