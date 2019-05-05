@@ -37,6 +37,14 @@ public class ReactorIntegration implements BlockHoundIntegration {
             return;
         }
 
+        try {
+            // Reactor 3.3.x comes with built-in integration
+            Class.forName("reactor.core.CorePublisher");
+            return;
+        }
+        catch (ClassNotFoundException ignored) {
+        }
+
         // `ScheduledThreadPoolExecutor$DelayedWorkQueue.offer` parks the Thread with Unsafe#park.
         builder.allowBlockingCallsInside(ScheduledThreadPoolExecutor.class.getName(), "scheduleAtFixedRate");
 

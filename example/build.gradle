@@ -2,6 +2,9 @@ plugins {
     id "java"
 }
 
+repositories {
+    maven { url 'https://repo.spring.io/libs-snapshot' }
+}
 
 test {
     dependsOn(tasks.getByPath(":agent:shadowJar"))
@@ -16,6 +19,22 @@ test {
     jvmArgs = ["-Xverify:all"]
 }
 
+configurations {
+    reactor_3_3_x {
+        extendsFrom(testCompile, testRuntime)
+    }
+}
+
+task testReactor3_3_x(type: Test) {
+    group = 'verification'
+
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.output.classesDirs + configurations.reactor_3_3_x
+
+    include 'com/example/ReactorTest**'
+}
+check.dependsOn(testReactor3_3_x)
+
 dependencies {
     testCompile project(path: ":agent", configuration: 'shadow')
     testCompile 'io.projectreactor:reactor-core:3.2.2.RELEASE'
@@ -23,4 +42,6 @@ dependencies {
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.assertj:assertj-core:3.11.1'
+
+    reactor_3_3_x 'io.projectreactor:reactor-core:3.3.0.BUILD-SNAPSHOT'
 }
