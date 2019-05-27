@@ -37,6 +37,12 @@ task sourcesJar(type: Jar) {
     from sourceSets.main.allJava
 }
 
+jar {
+  manifest {
+    attributes 'Automatic-Module-Name': 'reactor.blockhound.junit'
+  }
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) { publication ->

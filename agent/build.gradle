@@ -25,6 +25,7 @@ shadowJar {
         attributes('Can-Retransform-Classes': 'true')
         attributes('Can-Set-Native-Method-Prefix': 'true')
         attributes('Can-Redefine-Classes': 'true')
+        attributes('Automatic-Module-Name': 'reactor.blockhound')
     }
 
     exclude 'module-info.class'
