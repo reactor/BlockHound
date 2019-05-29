@@ -39,6 +39,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
@@ -49,7 +50,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ReactorTest {
 
     static {
-        BlockHound.install();
+        BlockHound.install(builder -> {
+            // TODO remove once https://github.com/reactor/reactor-core/pull/1726 is merged
+            builder.allowBlockingCallsInside(ScheduledThreadPoolExecutor.class.getName() + "$DelayedWorkQueue", "take");
+        });
     }
 
     @Parameters(name = "{index}: {0}")
