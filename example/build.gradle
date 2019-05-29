@@ -22,6 +22,7 @@ test {
 configurations {
     reactor_3_3_x {
         extendsFrom(testCompile, testRuntime)
+        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
     }
 }
 
@@ -43,5 +44,7 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'org.assertj:assertj-core:3.11.1'
 
-    reactor_3_3_x 'io.projectreactor:reactor-core:3.3.0.BUILD-SNAPSHOT'
+    reactor_3_3_x 'io.projectreactor:reactor-core:3.3.0.BUILD-SNAPSHOT', {
+        changing = true
+    }
 }
