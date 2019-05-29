@@ -116,5 +116,5 @@ extern "C" JNIEXPORT jboolean JNICALL Java_reactor_blockhound_BlockHoundRuntime_
         start_depth += page_size;
     } while (frames_count == page_size);
 
-    return JNI_FALSE;
+    return JNI_TRUE;
 }

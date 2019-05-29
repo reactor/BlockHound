@@ -148,9 +148,6 @@ public class BlockHound {
             put(Throwable.class, new HashMap<String, Boolean>() {{
                 put("printStackTrace", true);
             }});
-            put(Thread.class, new HashMap<String, Boolean>() {{
-                put("run", false);
-            }});
         }};
 
         private Consumer<BlockingMethod> onBlockingMethod = method -> {
