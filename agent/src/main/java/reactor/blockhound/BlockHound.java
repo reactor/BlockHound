@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -147,6 +148,10 @@ public class BlockHound {
             }});
             put(Throwable.class, new HashMap<String, Boolean>() {{
                 put("printStackTrace", true);
+            }});
+
+            put(ConcurrentHashMap.class, new HashMap<String, Boolean>() {{
+                put("initTable", true);
             }});
         }};
 
