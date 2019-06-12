@@ -1,6 +1,13 @@
 services:
   - docker
 
+script:
+  - ./gradlew check jmh -Pjmh.simpleTravisMode
+
+after_script:
+  - cat example/build/reports/jmh/results*txt
+  - cat example/build/reports/jmh/humanReadableResults*.txt
+
 language: java
 jdk:
   - openjdk11
