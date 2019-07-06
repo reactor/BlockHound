@@ -55,18 +55,6 @@ dependencies {
 }
 
 jmh {
-    if (project.hasProperty("jmh.simpleTravisMode")) { //temporary for JHM sanity testing in Travis
-        include = 'reactor\\.blockhound\\.BlockHoundDummyBenchmark.*'
-        warmupIterations = 1
-        iterations = 3
-        fork = 1
-    } else {
-        include = 'reactor\\.blockhound\\.BlockHound.*Benchmark.*'
-        warmupIterations = 3
-        iterations = 5
-        fork = 3
-    }
-    resultsFile = project.file("${project.buildDir}/reports/jmh/results${System.currentTimeMillis()}.txt")
-    humanOutputFile = project.file("${project.buildDir}/reports/jmh/humanReadableResults${System.currentTimeMillis()}.txt")
+    include = 'reactor\\.blockhound\\.BlockHound.*Benchmark.*'
     includeTests = true
 }
