@@ -36,7 +36,7 @@ import static org.objectweb.asm.Opcodes.*;
  */
 class ASMClassFileTransformer implements ClassFileTransformer {
 
-    private static final Type BLOCK_HOUND_RUNTIME_TYPE = Type.getType(BlockHoundRuntime.class);
+    private static final Type BLOCK_HOUND_RUNTIME_TYPE = Type.getType("Lreactor/blockhound/BlockHoundRuntime;");
 
     private static final Method CHECK_BLOCKING_METHOD = new Method(
             "checkBlocking",

@@ -19,6 +19,9 @@ package reactor.blockhound;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+// Warning!!! This class MUST NOT be loaded by any classloader other than the bootstrap one.
+// Otherwise, non-bootstrap classes will be referring to it, but only the bootstrap one gets
+// initialized and linked to the native library.
 public class BlockHoundRuntime {
 
     @SuppressWarnings("unused")

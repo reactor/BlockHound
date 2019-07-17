@@ -157,7 +157,7 @@ public class BlockHound {
         private Predicate<Thread> threadPredicate = t -> false;
 
         public Builder markAsBlocking(Class clazz, String methodName, String signature) {
-            return markAsBlocking(clazz.getCanonicalName(), methodName, signature);
+            return markAsBlocking(clazz.getName(), methodName, signature);
         }
 
         public Builder markAsBlocking(String className, String methodName, String signature) {
@@ -213,12 +213,12 @@ public class BlockHound {
 
                 Instrumentation instrumentation = ByteBuddyAgent.install();
 
-                InstrumentationUtils.injectBootstrapClasses(instrumentation, BlockHoundRuntime.class);
+                InstrumentationUtils.injectBootstrapClasses(instrumentation, "reactor/blockhound/BlockHoundRuntime");
 
                 final Class<?> runtimeClass;
                 final Method initMethod;
                 try {
-                    runtimeClass = ClassLoader.getSystemClassLoader().getParent().loadClass(BlockHoundRuntime.class.getCanonicalName());
+                    runtimeClass = ClassLoader.getSystemClassLoader().getParent().loadClass("reactor.blockhound.BlockHoundRuntime");
                     initMethod = runtimeClass.getMethod("init", String.class);
                 }
                 catch (Throwable e) {
@@ -275,11 +275,11 @@ public class BlockHound {
                             .of(instrumentation.getAllLoadedClasses())
                             .filter(it -> {
                                 try {
-                                    String canonicalName = it.getCanonicalName();
-                                    if (canonicalName == null) {
+                                    String className = it.getName();
+                                    if (className == null) {
                                         return false;
                                     }
-                                    return blockingMethods.containsKey(canonicalName.replace(".", "/"));
+                                    return blockingMethods.containsKey(className.replace(".", "/"));
                                 }
                                 catch (NoClassDefFoundError e) {
                                     return false;
