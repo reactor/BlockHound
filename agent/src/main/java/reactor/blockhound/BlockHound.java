@@ -38,6 +38,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static java.util.Collections.singleton;
+import static reactor.blockhound.ASMClassFileTransformer.BLOCK_HOUND_RUNTIME_TYPE;
 
 public class BlockHound {
 
@@ -213,12 +214,12 @@ public class BlockHound {
 
                 Instrumentation instrumentation = ByteBuddyAgent.install();
 
-                InstrumentationUtils.injectBootstrapClasses(instrumentation, "reactor/blockhound/BlockHoundRuntime");
+                InstrumentationUtils.injectBootstrapClasses(instrumentation, BLOCK_HOUND_RUNTIME_TYPE.getInternalName());
 
                 final Class<?> runtimeClass;
                 final Method initMethod;
                 try {
-                    runtimeClass = ClassLoader.getSystemClassLoader().getParent().loadClass("reactor.blockhound.BlockHoundRuntime");
+                    runtimeClass = ClassLoader.getSystemClassLoader().getParent().loadClass(BLOCK_HOUND_RUNTIME_TYPE.getClassName());
                     initMethod = runtimeClass.getMethod("init", String.class);
                 }
                 catch (Throwable e) {
