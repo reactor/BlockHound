@@ -305,6 +305,7 @@ public class BlockHound {
         }
 
         Path tempFile = Files.createTempFile("BlockHound", ".dylib");
+        tempFile.toFile().deleteOnExit();
         try (InputStream inputStream = nativeLibraryURL.openStream()) {
             Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
         }

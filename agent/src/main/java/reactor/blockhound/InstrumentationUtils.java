@@ -29,6 +29,7 @@ class InstrumentationUtils {
 
     static void injectBootstrapClasses(Instrumentation instrumentation, String... classNames) throws IOException {
         File tempJarFile = File.createTempFile("BlockHound", ".jar");
+        tempJarFile.deleteOnExit();
 
         ClassLoader classLoader = BlockHound.class.getClassLoader();
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(tempJarFile))) {
