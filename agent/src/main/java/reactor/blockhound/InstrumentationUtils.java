@@ -27,13 +27,14 @@ import java.util.zip.ZipOutputStream;
 
 class InstrumentationUtils {
 
-    static void injectBootstrapClasses(Instrumentation instrumentation, Class... classes) throws IOException {
+    static void injectBootstrapClasses(Instrumentation instrumentation, String... classNames) throws IOException {
         File tempJarFile = File.createTempFile("BlockHound", ".jar");
+        tempJarFile.deleteOnExit();
 
         ClassLoader classLoader = BlockHound.class.getClassLoader();
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(new FileOutputStream(tempJarFile))) {
-            for (Class clazz : classes) {
-                String classFile = clazz.getName().replace(".", "/") + ".class";
+            for (String className : classNames) {
+                String classFile = className.replace(".", "/") + ".class";
                 InputStream inputStream = classLoader.getResourceAsStream(classFile);
                 ZipEntry e = new ZipEntry(classFile);
                 zipOutputStream.putNextEntry(e);
