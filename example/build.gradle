@@ -1,6 +1,5 @@
 plugins {
     id "java"
-    id "me.champeau.gradle.jmh" version "0.4.8"
 }
 
 repositories {
@@ -48,13 +47,4 @@ dependencies {
     reactor_3_3_x 'io.projectreactor:reactor-core:3.3.0.BUILD-SNAPSHOT', {
         changing = true
     }
-
-    jmh project(path: ":agent", configuration: 'shadow')
-    //Uncomment for benchmark execution by Idea plugin
-//    jmh "org.openjdk.jmh:jmh-generator-annprocess:1.21"
-}
-
-jmh {
-    include = 'reactor\\.blockhound\\.BlockHound.*Benchmark.*'
-    includeTests = true
 }
