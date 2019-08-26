@@ -1,0 +1,17 @@
+plugins {
+    id "java"
+    id "me.champeau.gradle.jmh" version "0.4.8"
+}
+
+sourceCompatibility = targetCompatibility = 8
+
+jmh {
+    jmhVersion = '1.21'
+    duplicateClassesStrategy DuplicatesStrategy.INCLUDE
+    failOnError = true
+}
+
+dependencies {
+    jmh project(path: ":agent", configuration: 'shadow')
+    jmh "org.openjdk.jmh:jmh-generator-annprocess:1.21"
+}
