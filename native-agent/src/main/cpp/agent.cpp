@@ -24,20 +24,12 @@ struct BlockingStackElement {
     bool allowed;
 };
 
-typedef struct ThreadTag {
-    bool isNonBlocking;
-} ThreadTag;
-
 static std::unordered_map<jmethodID, BlockingStackElement> hooks;
 
 static jvmtiEnv *jvmti;
 
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *) {
     jvm->GetEnv((void **) &jvmti, JVMTI_VERSION_1_2);
-
-    jvmtiCapabilities capabilities = {};
-    capabilities.can_tag_objects = 1;
-    jvmti->AddCapabilities(&capabilities);
 
     return JNI_VERSION_1_8;
 }
@@ -69,29 +61,6 @@ extern "C" JNIEXPORT void JNICALL Java_reactor_blockhound_BlockHoundRuntime_mark
 extern "C" JNIEXPORT jboolean JNICALL Java_reactor_blockhound_BlockHoundRuntime_isBlocking(JNIEnv *env) {
     jthread thread;
     jvmti->GetCurrentThread(&thread);
-
-    ThreadTag *t = NULL;
-    jlong tag;
-    jvmti->GetTag(thread, &tag);
-    if (tag) {
-        t = (ThreadTag *) (ptrdiff_t) tag;
-    }
-
-    if (!t) {
-        t = new ThreadTag();
-        jvmti->SetTag(thread, (ptrdiff_t) (void *) t);
-
-        // Since we call back into Java code, it might call a blocking method.
-        // However, since "isNonBlocking" is false by default,
-        // it should be safe and not create a recursion problem.
-        jclass runtimeClass = env->FindClass("Lreactor/blockhound/BlockHoundRuntime;");
-        jmethodID isBlockingThreadMethodId = env->GetStaticMethodID(runtimeClass, "isBlockingThread", "(Ljava/lang/Thread;)Z");
-        t->isNonBlocking = env->CallStaticBooleanMethod(runtimeClass, isBlockingThreadMethodId, thread) == JNI_TRUE;
-    }
-
-    if (!t->isNonBlocking) {
-        return JNI_FALSE;
-    }
 
     const jint page_size = 32;
     jint start_depth = 2; // Skip current method & checkBlocking

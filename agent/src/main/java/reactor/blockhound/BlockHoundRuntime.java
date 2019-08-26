@@ -40,21 +40,17 @@ public class BlockHoundRuntime {
     @SuppressWarnings("unused")
     private static volatile Predicate<Thread> threadPredicate;
 
-    @SuppressWarnings("unused")
-    public static void checkBlocking(String className, String methodName, int modifiers) {
-        if (isBlocking()) {
-            blockingMethodConsumer.accept(new Object[] { className, methodName, modifiers });
-        }
-    }
+    private static final ThreadLocal<Boolean> IS_NON_BLOCKING = ThreadLocal.withInitial(() -> {
+        return threadPredicate.test(Thread.currentThread());
+    });
 
     @SuppressWarnings("unused")
-    private static boolean isBlockingThread(Thread thread) {
-        try {
-            return threadPredicate.test(thread);
+    public static void checkBlocking(String className, String methodName, int modifiers) {
+        if (!IS_NON_BLOCKING.get()) {
+            return;
         }
-        catch (Error e) {
-            e.printStackTrace();
-            throw e;
+        if (isBlocking()) {
+            blockingMethodConsumer.accept(new Object[] { className, methodName, modifiers });
         }
     }
 }
