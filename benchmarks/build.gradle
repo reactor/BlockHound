@@ -5,13 +5,28 @@ plugins {
 
 sourceCompatibility = targetCompatibility = 8
 
+repositories {
+    maven { url 'https://repo.spring.io/libs-milestone' }
+}
+
 jmh {
     jmhVersion = '1.21'
     duplicateClassesStrategy DuplicatesStrategy.INCLUDE
     failOnError = true
+
+    def outputType = "baseline" == project.findProperty("jmhTarget")  ? "jmhBaseline" : "jmh"
+    resultFormat = "text"
+    resultsFile = project.file("${project.buildDir}/reports/${outputType}/result.${resultFormat}")
 }
 
 dependencies {
-    jmh project(path: ":agent", configuration: 'shadow')
+    switch (project.findProperty("jmhTarget")) {
+        case "baseline":
+            jmh 'io.projectreactor.tools:blockhound:1.0.0.M5'
+            break
+        default:
+            jmh project(path: ":agent", configuration: 'shadow')
+    }
+
     jmh "org.openjdk.jmh:jmh-generator-annprocess:1.21"
 }
