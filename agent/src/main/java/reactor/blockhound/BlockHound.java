@@ -24,7 +24,6 @@ import reactor.blockhound.integration.BlockHoundIntegration;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -204,29 +203,19 @@ public class BlockHound {
                 }
 
                 Instrumentation instrumentation = ByteBuddyAgent.install();
-
                 InstrumentationUtils.injectBootstrapClasses(instrumentation, BLOCK_HOUND_RUNTIME_TYPE.getInternalName());
 
-                final Class<?> runtimeClass;
-                try {
-                    runtimeClass = ClassLoader.getSystemClassLoader().getParent().loadClass(BLOCK_HOUND_RUNTIME_TYPE.getClassName());
-                }
-                catch (Throwable e) {
-                    throw new RuntimeException(e);
-                }
-
-                Field blockingMethodConsumerField = runtimeClass.getDeclaredField("blockingMethodConsumer");
-                blockingMethodConsumerField.setAccessible(true);
-                blockingMethodConsumerField.set(null, (Consumer<Object[]>) args -> {
+                BlockHoundRuntime.blockingMethodConsumer = args -> {
                     String className = (String) args[0];
                     String methodName = (String) args[1];
                     int modifiers = (Integer) args[2];
                     onBlockingMethod.accept(new BlockingMethod(className, methodName, modifiers));
-                });
+                };
 
-                Field threadPredicateField = runtimeClass.getDeclaredField("threadPredicate");
-                threadPredicateField.setAccessible(true);
-                threadPredicateField.set(null, threadPredicate);
+                BlockHoundRuntime.threadPredicate = threadPredicate;
+
+                // Trigger classloading of `threadPredicate`
+                BlockHoundRuntime.threadPredicate.test(Thread.currentThread());
 
                 instrument(instrumentation);
             }
@@ -240,6 +229,7 @@ public class BlockHound {
             instrumentation.addTransformer(transformer, true);
             instrumentation.setNativeMethodPrefix(transformer, PREFIX);
 
+            // Retransform all native methods first so that ByteBuddy does not treat them as native
             instrumentation.retransformClasses(
                     Stream
                             .of(instrumentation.getAllLoadedClasses())
@@ -260,78 +250,57 @@ public class BlockHound {
             );
 
             new AgentBuilder.Default()
-                    .disableClassFormatChanges()
                     .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                    .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                    .with(AgentBuilder.TypeStrategy.Default.DECORATE)
                     .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                    // .with(AgentBuilder.Listener.StreamWriting.toSystemOut().withTransformationsOnly())
-                    // .with(new DumpingListener())
                     // Do not ignore JDK classes
                     .ignore(ElementMatchers.none())
-                    // Transform blocking methods
-                    .type(target -> blockingMethods.containsKey(target.getInternalName()))
-                    .transform((builder, typeDescription, classLoader, module) -> {
-                        Map<String, Set<String>> methods = blockingMethods.get(typeDescription.getInternalName());
-
-                        return builder.visit(
-                                Advice.withCustomMapping()
-                                        .bind(
-                                                BlockingCallAdvice.ModifiersArgument.class,
-                                                (instrumentedType, instrumentedMethod, assigner, argumentHandler, sort) -> {
-                                                    return Advice.OffsetMapping.Target.ForStackManipulation.of(instrumentedMethod.getModifiers());
-                                                }
-                                        )
-                                        .to(BlockingCallAdvice.class)
-                                        .on(method -> {
-                                            Set<String> descriptors = methods.get(method.getName());
-                                            return descriptors != null && descriptors.contains(method.getDescriptor());
-                                        })
-                        );
+                    .type((typeDescription, classLoader, module, classBeingRedefined, protectionDomain) -> {
+                        return blockingMethods.containsKey(typeDescription.getInternalName()) || allowances.containsKey(typeDescription.getName());
                     })
-                    .asTerminalTransformation()
-                    // Transform allowed/disallowed methods
-                    .type(target -> allowances.containsKey(target.getName()))
                     .transform((builder, typeDescription, classLoader, module) -> {
-                        Map<String, Boolean> methods = allowances.get(typeDescription.getName());
+                        Map<String, Set<String>> blockingMethodsOfClass = blockingMethods.get(typeDescription.getInternalName());
 
-                        return builder
-                                .visit(
-                                        Advice
-                                                .withCustomMapping()
-                                                .bind(AllowAdvice.AllowedArgument.class, true)
-                                                .to(AllowAdvice.class)
-                                                .on(method -> Boolean.TRUE.equals(methods.get(method.getName())))
-                                )
-                                .visit(
-                                        Advice
-                                                .withCustomMapping()
-                                                .bind(AllowAdvice.AllowedArgument.class, false)
-                                                .to(AllowAdvice.class)
-                                                .on(method -> Boolean.FALSE.equals(methods.get(method.getName())))
-                                );
+                        if (blockingMethodsOfClass != null) {
+                            builder = builder.visit(
+                                    Advice.withCustomMapping()
+                                            .bind(
+                                                    BlockingCallAdvice.ModifiersArgument.class,
+                                                    (instrumentedType, instrumentedMethod, assigner, argumentHandler, sort) -> {
+                                                        return Advice.OffsetMapping.Target.ForStackManipulation.of(instrumentedMethod.getModifiers());
+                                                    }
+                                            )
+                                            .to(BlockingCallAdvice.class)
+                                            .on(method -> {
+                                                Set<String> descriptors = blockingMethodsOfClass.get(method.getName());
+                                                return descriptors != null && descriptors.contains(method.getDescriptor());
+                                            })
+                            );
+                        }
+
+                        Map<String, Boolean> allowanceMethods = allowances.get(typeDescription.getName());
+
+                        if (allowanceMethods != null) {
+                            builder = builder
+                                    .visit(
+                                            Advice
+                                                    .withCustomMapping()
+                                                    .bind(AllowAdvice.AllowedArgument.class, true)
+                                                    .to(AllowAdvice.class)
+                                                    .on(method -> Boolean.TRUE.equals(allowanceMethods.get(method.getName())))
+                                    )
+                                    .visit(
+                                            Advice
+                                                    .withCustomMapping()
+                                                    .bind(AllowAdvice.AllowedArgument.class, false)
+                                                    .to(AllowAdvice.class)
+                                                    .on(method -> Boolean.FALSE.equals(allowanceMethods.get(method.getName())))
+                                    );
+                        }
+
+                        return builder;
                     })
                     .installOn(instrumentation);
-
-            instrumentation.retransformClasses(
-                    Stream
-                            .of(instrumentation.getAllLoadedClasses())
-                            .filter(it -> {
-                                try {
-                                    String className = it.getName();
-                                    if (className == null) {
-                                        return false;
-                                    }
-                                    String internalClassName = className.replace(".", "/");
-                                    return blockingMethods.containsKey(internalClassName) || allowances.containsKey(className);
-                                }
-                                catch (NoClassDefFoundError e) {
-                                    return false;
-                                }
-                            })
-                            .toArray(Class[]::new)
-            );
         }
-
     }
-
 }

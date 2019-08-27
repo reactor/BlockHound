@@ -25,15 +25,16 @@ import java.util.function.Predicate;
 public class BlockHoundRuntime {
 
     @SuppressWarnings("unused")
-    private static volatile Consumer<Object[]> blockingMethodConsumer;
+    public static volatile Consumer<Object[]> blockingMethodConsumer;
 
     @SuppressWarnings("unused")
-    private static volatile Predicate<Thread> threadPredicate;
+    public static volatile Predicate<Thread> threadPredicate;
 
     public static final ThreadLocal<Boolean> IS_ALLOWED = ThreadLocal.withInitial(() -> {
         if (threadPredicate.test(Thread.currentThread())) {
             return false;
-        } else {
+        }
+        else {
             // Optimization: use Three-state (true, false, null) where `null` is `not non-blocking`
             return null;
         }

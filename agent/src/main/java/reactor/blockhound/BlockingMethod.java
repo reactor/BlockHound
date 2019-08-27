@@ -16,7 +16,7 @@
 
 package reactor.blockhound;
 
-import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static net.bytebuddy.jar.asm.Opcodes.ACC_STATIC;
 
 public class BlockingMethod {
 

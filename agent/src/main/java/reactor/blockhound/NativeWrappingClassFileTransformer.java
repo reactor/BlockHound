@@ -16,18 +16,14 @@
 
 package reactor.blockhound;
 
-import org.objectweb.asm.*;
-import org.objectweb.asm.commons.GeneratorAdapter;
-import org.objectweb.asm.util.CheckClassAdapter;
+import net.bytebuddy.jar.asm.*;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.lang.instrument.ClassFileTransformer;
 import java.security.ProtectionDomain;
 import java.util.Map;
 import java.util.Set;
 
-import static org.objectweb.asm.Opcodes.*;
+import static net.bytebuddy.jar.asm.Opcodes.*;
 
 /**
  * This ASM-based transformer finds all methods defined in {@link NativeWrappingClassFileTransformer#blockingMethods}
@@ -61,17 +57,9 @@ class NativeWrappingClassFileTransformer implements ClassFileTransformer {
         ClassWriter cw = new ClassWriter(cr, ClassWriter.COMPUTE_MAXS);
 
         try {
-            cr.accept(new NativeWrappingClassVisitor(cw, blockingMethods.get(className), className), 0);
+            cr.accept(new NativeWrappingClassVisitor(cw, blockingMethodsOfClass, className), 0);
 
             classfileBuffer = cw.toByteArray();
-
-            StringWriter stringWriter = new StringWriter();
-            PrintWriter printWriter = new PrintWriter(stringWriter);
-            CheckClassAdapter.verify(new ClassReader(classfileBuffer), false, printWriter);
-            String output = stringWriter.toString();
-            if (!output.isEmpty()) {
-                System.err.println("Verification failed for " + className + ":\n" + output);
-            }
         }
         catch (Throwable e) {
             e.printStackTrace();
@@ -88,7 +76,7 @@ class NativeWrappingClassFileTransformer implements ClassFileTransformer {
         private final Map<String, Set<String>> methods;
 
         NativeWrappingClassVisitor(ClassVisitor cw, Map<String, Set<String>> methods, String className) {
-            super(Opcodes.ASM7, cw);
+            super(ASM7, cw);
             this.className = className;
             this.methods = methods;
         }
@@ -96,10 +84,6 @@ class NativeWrappingClassFileTransformer implements ClassFileTransformer {
         @Override
         public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
             if ((access & ACC_NATIVE) == 0) {
-                return super.visitMethod(access, name, descriptor, signature, exceptions);
-            }
-
-            if (methods == null) {
                 return super.visitMethod(access, name, descriptor, signature, exceptions);
             }
 
@@ -120,15 +104,22 @@ class NativeWrappingClassFileTransformer implements ClassFileTransformer {
             MethodVisitor delegatingMethodVisitor = super.visitMethod(access & ~ACC_NATIVE, name, descriptor, signature, exceptions);
             delegatingMethodVisitor.visitCode();
 
-            return new GeneratorAdapter(ASM7, delegatingMethodVisitor, access & ~ACC_NATIVE, name, descriptor) {
+            return new MethodVisitor(ASM7, delegatingMethodVisitor) {
 
                 @Override
                 public void visitEnd() {
+                    Type returnType = Type.getReturnType(descriptor);
+                    Type[] argumentTypes = Type.getArgumentTypes(descriptor);
                     boolean isStatic = (access & ACC_STATIC) != 0;
                     if (!isStatic) {
-                        loadThis();
+                        visitVarInsn(ALOAD, 0);
                     }
-                    loadArgs();
+                    int index = isStatic ? 0 : 1;
+                    for (Type argumentType : argumentTypes) {
+                        visitVarInsn(argumentType.getOpcode(ILOAD), index);
+                        index += argumentType.getSize();
+                    }
+
                     visitMethodInsn(
                             isStatic ? INVOKESTATIC : INVOKESPECIAL,
                             className,
@@ -136,8 +127,9 @@ class NativeWrappingClassFileTransformer implements ClassFileTransformer {
                             descriptor,
                             false
                     );
-                    returnValue();
-                    endMethod();
+                    visitInsn(returnType.getOpcode(IRETURN));
+                    visitMaxs(0, 0);
+                    super.visitEnd();
                 }
             };
         }

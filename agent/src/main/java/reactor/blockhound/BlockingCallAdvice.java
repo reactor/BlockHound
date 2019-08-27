@@ -23,28 +23,20 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-class AllowAdvice {
+class BlockingCallAdvice {
 
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @java.lang.annotation.Target(ElementType.PARAMETER)
-    @interface AllowedArgument {
+    @interface ModifiersArgument {
     }
 
     @Advice.OnMethodEnter
-    static boolean onEnter(@AllowedArgument boolean allowed) {
-        Boolean previous = BlockHoundRuntime.IS_ALLOWED.get();
-        if (previous == null || previous == allowed) {
-            return allowed;
-        }
-        BlockHoundRuntime.IS_ALLOWED.set(allowed);
-        return previous;
-    }
-
-    @Advice.OnMethodExit(onThrowable = Throwable.class)
-    static void onExit(@Advice.Enter boolean wasAllowed, @AllowedArgument boolean allowed) {
-        if (wasAllowed != allowed) {
-            BlockHoundRuntime.IS_ALLOWED.set(wasAllowed);
-        }
+    static void onEnter(
+            @Advice.Origin("#t") String declaringType,
+            @Advice.Origin("#m") String methodName,
+            @BlockingCallAdvice.ModifiersArgument int modifiers
+    ) {
+        BlockHoundRuntime.checkBlocking(declaringType, methodName, modifiers);
     }
 }
