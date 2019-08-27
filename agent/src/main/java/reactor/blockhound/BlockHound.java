@@ -230,22 +230,15 @@ public class BlockHound {
             instrumentation.setNativeMethodPrefix(transformer, PREFIX);
 
             // Retransform all native methods first so that ByteBuddy does not treat them as native
+            Class[] allLoadedClasses = instrumentation.getAllLoadedClasses();
+            Predicate<Class> blockingMethodPredicate = it -> {
+                return blockingMethods.containsKey(it.getName().replace(".", "/"));
+            };
             instrumentation.retransformClasses(
                     Stream
-                            .of(instrumentation.getAllLoadedClasses())
-                            .filter(it -> {
-                                try {
-                                    String className = it.getName();
-                                    if (className == null) {
-                                        return false;
-                                    }
-                                    String internalClassName = className.replace(".", "/");
-                                    return blockingMethods.containsKey(internalClassName);
-                                }
-                                catch (NoClassDefFoundError e) {
-                                    return false;
-                                }
-                            })
+                            .of(allLoadedClasses)
+                            .filter(it -> it.getName() != null)
+                            .filter(blockingMethodPredicate)
                             .toArray(Class[]::new)
             );
 
@@ -301,6 +294,16 @@ public class BlockHound {
                         return builder;
                     })
                     .installOn(instrumentation);
+
+            HashSet<Class> previouslyLoadedClasses = new HashSet<>(Arrays.asList(allLoadedClasses));
+            instrumentation.retransformClasses(
+                    Stream
+                            .of(allLoadedClasses)
+                            .filter(it -> it.getName() != null)
+                            .filter(it -> !previouslyLoadedClasses.contains(it))
+                            .filter(blockingMethodPredicate.or(it -> allowances.containsKey(it.getName())))
+                            .toArray(Class[]::new)
+            );
         }
     }
 }
