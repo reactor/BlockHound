@@ -17,18 +17,14 @@
 package reactor.blockhound;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
+import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.asm.Advice;
+import net.bytebuddy.matcher.ElementMatchers;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,7 +35,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static java.util.Collections.singleton;
-import static reactor.blockhound.ASMClassFileTransformer.BLOCK_HOUND_RUNTIME_TYPE;
+import static reactor.blockhound.NativeWrappingClassFileTransformer.BLOCK_HOUND_RUNTIME_TYPE;
 
 public class BlockHound {
 
@@ -143,15 +139,15 @@ public class BlockHound {
             }
         }};
 
-        private final Map<Class<?>, Map<String, Boolean>> allowances = new HashMap<Class<?>, Map<String, Boolean>>() {{
-            put(ClassLoader.class, new HashMap<String, Boolean>() {{
+        private final Map<String, Map<String, Boolean>> allowances = new HashMap<String, Map<String, Boolean>>() {{
+            put(ClassLoader.class.getName(), new HashMap<String, Boolean>() {{
                 put("loadClass", true);
             }});
-            put(Throwable.class, new HashMap<String, Boolean>() {{
+            put(Throwable.class.getName(), new HashMap<String, Boolean>() {{
                 put("printStackTrace", true);
             }});
 
-            put(ConcurrentHashMap.class, new HashMap<String, Boolean>() {{
+            put(ConcurrentHashMap.class.getName(), new HashMap<String, Boolean>() {{
                 put("initTable", true);
             }});
         }};
@@ -174,22 +170,12 @@ public class BlockHound {
         }
 
         public Builder allowBlockingCallsInside(String className, String methodName) {
-            try {
-                allowances.computeIfAbsent(Class.forName(className), __ -> new HashMap<>()).put(methodName, true);
-            }
-            catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
+            allowances.computeIfAbsent(className, __ -> new HashMap<>()).put(methodName, true);
             return this;
         }
 
         public Builder disallowBlockingCallsInside(String className, String methodName) {
-            try {
-                allowances.computeIfAbsent(Class.forName(className), __ -> new HashMap<>()).put(methodName, false);
-            }
-            catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
+            allowances.computeIfAbsent(className, __ -> new HashMap<>()).put(methodName, false);
             return this;
         }
 
@@ -222,34 +208,12 @@ public class BlockHound {
                 InstrumentationUtils.injectBootstrapClasses(instrumentation, BLOCK_HOUND_RUNTIME_TYPE.getInternalName());
 
                 final Class<?> runtimeClass;
-                final Method initMethod;
                 try {
                     runtimeClass = ClassLoader.getSystemClassLoader().getParent().loadClass(BLOCK_HOUND_RUNTIME_TYPE.getClassName());
-                    initMethod = runtimeClass.getMethod("init", String.class);
                 }
                 catch (Throwable e) {
                     throw new RuntimeException(e);
                 }
-                initMethod.invoke(null, extractNativeLibFile().toString());
-
-                final Method markMethod;
-                try {
-                    markMethod = runtimeClass.getMethod("markMethod", Class.class, String.class, boolean.class);
-                }
-                catch (Throwable e) {
-                    throw new RuntimeException(e);
-                }
-
-                markMethod.invoke(null, runtimeClass, "checkBlocking", true);
-
-                allowances.forEach((clazz, methods) -> methods.forEach((methodName, allowed) -> {
-                    try {
-                        markMethod.invoke(null, clazz, methodName, allowed);
-                    }
-                    catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }));
 
                 Field blockingMethodConsumerField = runtimeClass.getDeclaredField("blockingMethodConsumer");
                 blockingMethodConsumerField.setAccessible(true);
@@ -272,7 +236,7 @@ public class BlockHound {
         }
 
         private void instrument(Instrumentation instrumentation) throws Exception {
-            ClassFileTransformer transformer = new ASMClassFileTransformer(blockingMethods);
+            ClassFileTransformer transformer = new NativeWrappingClassFileTransformer(blockingMethods);
             instrumentation.addTransformer(transformer, true);
             instrumentation.setNativeMethodPrefix(transformer, PREFIX);
 
@@ -285,7 +249,80 @@ public class BlockHound {
                                     if (className == null) {
                                         return false;
                                     }
-                                    return blockingMethods.containsKey(className.replace(".", "/"));
+                                    String internalClassName = className.replace(".", "/");
+                                    return blockingMethods.containsKey(internalClassName);
+                                }
+                                catch (NoClassDefFoundError e) {
+                                    return false;
+                                }
+                            })
+                            .toArray(Class[]::new)
+            );
+
+            new AgentBuilder.Default()
+                    .disableClassFormatChanges()
+                    .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                    .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                    .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                    // .with(AgentBuilder.Listener.StreamWriting.toSystemOut().withTransformationsOnly())
+                    // .with(new DumpingListener())
+                    // Do not ignore JDK classes
+                    .ignore(ElementMatchers.none())
+                    // Transform blocking methods
+                    .type(target -> blockingMethods.containsKey(target.getInternalName()))
+                    .transform((builder, typeDescription, classLoader, module) -> {
+                        Map<String, Set<String>> methods = blockingMethods.get(typeDescription.getInternalName());
+
+                        return builder.visit(
+                                Advice.withCustomMapping()
+                                        .bind(
+                                                BlockingCallAdvice.ModifiersArgument.class,
+                                                (instrumentedType, instrumentedMethod, assigner, argumentHandler, sort) -> {
+                                                    return Advice.OffsetMapping.Target.ForStackManipulation.of(instrumentedMethod.getModifiers());
+                                                }
+                                        )
+                                        .to(BlockingCallAdvice.class)
+                                        .on(method -> {
+                                            Set<String> descriptors = methods.get(method.getName());
+                                            return descriptors != null && descriptors.contains(method.getDescriptor());
+                                        })
+                        );
+                    })
+                    .asTerminalTransformation()
+                    // Transform allowed/disallowed methods
+                    .type(target -> allowances.containsKey(target.getName()))
+                    .transform((builder, typeDescription, classLoader, module) -> {
+                        Map<String, Boolean> methods = allowances.get(typeDescription.getName());
+
+                        return builder
+                                .visit(
+                                        Advice
+                                                .withCustomMapping()
+                                                .bind(AllowAdvice.AllowedArgument.class, true)
+                                                .to(AllowAdvice.class)
+                                                .on(method -> Boolean.TRUE.equals(methods.get(method.getName())))
+                                )
+                                .visit(
+                                        Advice
+                                                .withCustomMapping()
+                                                .bind(AllowAdvice.AllowedArgument.class, false)
+                                                .to(AllowAdvice.class)
+                                                .on(method -> Boolean.FALSE.equals(methods.get(method.getName())))
+                                );
+                    })
+                    .installOn(instrumentation);
+
+            instrumentation.retransformClasses(
+                    Stream
+                            .of(instrumentation.getAllLoadedClasses())
+                            .filter(it -> {
+                                try {
+                                    String className = it.getName();
+                                    if (className == null) {
+                                        return false;
+                                    }
+                                    String internalClassName = className.replace(".", "/");
+                                    return blockingMethods.containsKey(internalClassName) || allowances.containsKey(className);
                                 }
                                 catch (NoClassDefFoundError e) {
                                     return false;
@@ -294,21 +331,7 @@ public class BlockHound {
                             .toArray(Class[]::new)
             );
         }
+
     }
 
-    private static Path extractNativeLibFile() throws IOException {
-        String nativeLibraryFileName = System.mapLibraryName("BlockHound");
-        URL nativeLibraryURL = BlockHound.class.getResource("/" + nativeLibraryFileName);
-
-        if (nativeLibraryURL == null) {
-            throw new IllegalStateException("Failed to load the following lib from a classpath: " + nativeLibraryFileName);
-        }
-
-        Path tempFile = Files.createTempFile("BlockHound", ".dylib");
-        tempFile.toFile().deleteOnExit();
-        try (InputStream inputStream = nativeLibraryURL.openStream()) {
-            Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
-        }
-        return tempFile.toAbsolutePath();
-    }
 }

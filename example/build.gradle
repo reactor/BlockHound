@@ -3,7 +3,7 @@ plugins {
 }
 
 repositories {
-    maven { url 'https://repo.spring.io/libs-snapshot' }
+    maven { url 'https://repo.spring.io/libs-milestone' }
 }
 
 test {
@@ -16,13 +16,17 @@ test {
     // This is not required in normal testing scenarios
     forkEvery = 1
     maxParallelForks = 1
-    jvmArgs = ["-Xverify:all"]
+    jvmArgs = [
+            "-Xverify:all",
+            JavaVersion.current().isJava9Compatible()
+                    ? "-Xlog:redefine+class*=warning"
+                    : "-XX:TraceRedefineClasses=2"
+    ]
 }
 
 configurations {
     reactor_3_3_x {
         extendsFrom(testCompile, testRuntime)
-        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
     }
 }
 
@@ -44,7 +48,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'org.assertj:assertj-core:3.11.1'
 
-    reactor_3_3_x 'io.projectreactor:reactor-core:3.3.0.BUILD-SNAPSHOT', {
-        changing = true
-    }
+    reactor_3_3_x 'io.projectreactor:reactor-core:3.3.0.M3'
 }
