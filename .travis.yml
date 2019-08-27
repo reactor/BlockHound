@@ -1,6 +1,3 @@
-services:
-  - docker
-
 language: java
 jdk:
   - openjdk11

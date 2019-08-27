@@ -15,45 +15,15 @@ jobs:
     inputs:
       gradleWrapperFile: 'gradlew'
       jdkVersionOption: '1.11'
-      options: '--no-daemon -x check'
+      options: '--no-daemon'
       tasks: 'build javadoc'
   - task: PublishPipelineArtifact@0
     inputs:
       artifactName: 'workspace'
       targetPath: '.'
 
-- job: test
-  dependsOn: build
-  displayName: Test
-  strategy:
-    matrix:
-      linux:
-        poolName: 'Hosted Ubuntu 1604'
-      mac:
-        poolName: 'Hosted macOS'
-      windows:
-        poolName: 'Hosted VS2017'
-  pool:
-    name: $(poolName)
-  workspace:
-    clean: all
-  steps:
-  - task: DownloadPipelineArtifact@0
-    inputs:
-      artifactName: 'workspace'
-      targetPath: $(System.DefaultWorkingDirectory)
-  - task: Gradle@2
-    displayName: Gradle build
-    inputs:
-      gradleWrapperFile: 'gradlew'
-      jdkVersionOption: '1.11'
-      options: '--no-daemon -x :agent:check -x :native-agent:check -x :native-agent:externalBuildBlockHoundLinuxSharedLibrary -x :native-agent:externalBuildBlockHoundOsxSharedLibrary -x :native-agent:externalBuildBlockHoundWindowsSharedLibrary'
-      tasks: 'check'
-      publishJUnitResults: true
-      testResultsFiles: '**/TEST-*.xml'
-
 - job: publish
-  dependsOn: test
+  dependsOn: build
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
   displayName: Publish SNAPSHOT
   pool:
