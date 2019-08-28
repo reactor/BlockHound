@@ -230,9 +230,6 @@ public class BlockHound {
                 threadPredicate.test(Thread.currentThread());
                 BlockHoundRuntime.threadPredicate = threadPredicate;
 
-                // Trigger classloading of `threadPredicate`
-                BlockHoundRuntime.threadPredicate.test(Thread.currentThread());
-
                 instrument(instrumentation);
             }
             catch (Throwable e) {
