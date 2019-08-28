@@ -159,6 +159,10 @@ public class BlockHound {
             put(ConcurrentHashMap.class.getName(), new HashMap<String, Boolean>() {{
                 put("initTable", true);
             }});
+
+            put(Advice.class.getName(), new HashMap<String, Boolean>() {{
+                put("to", true);
+            }});
         }};
 
         private Consumer<BlockingMethod> onBlockingMethod = method -> {
@@ -255,6 +259,7 @@ public class BlockHound {
                             classFileLocator,
                             TypePool.Default.ReaderMode.FAST
                     ))
+                    .with(AgentBuilder.Listener.StreamWriting.toSystemError().withErrorsOnly())
                     .with(new InstallationListener.Adapter() {
                         @Override
                         public void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
