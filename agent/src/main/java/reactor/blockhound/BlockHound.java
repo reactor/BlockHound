@@ -18,10 +18,18 @@ package reactor.blockhound;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.agent.builder.AgentBuilder.DescriptionStrategy;
+import net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy;
+import net.bytebuddy.agent.builder.AgentBuilder.InstallationListener;
+import net.bytebuddy.agent.builder.AgentBuilder.PoolStrategy;
+import net.bytebuddy.agent.builder.AgentBuilder.RedefinitionStrategy;
+import net.bytebuddy.agent.builder.AgentBuilder.RedefinitionStrategy.DiscoveryStrategy;
+import net.bytebuddy.agent.builder.AgentBuilder.TypeStrategy;
 import net.bytebuddy.agent.builder.ResettableClassFileTransformer;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.pool.TypePool.CacheProvider;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
 import java.lang.instrument.ClassFileTransformer;
@@ -228,8 +236,8 @@ public class BlockHound {
 
         private void instrument(Instrumentation instrumentation) throws Exception {
             new AgentBuilder.Default()
-                    .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
-                    .with(new AgentBuilder.RedefinitionStrategy.DiscoveryStrategy.Explicit(
+                    .with(RedefinitionStrategy.RETRANSFORMATION)
+                    .with(new DiscoveryStrategy.Explicit(
                             Stream
                                     .of(instrumentation.getAllLoadedClasses())
                                     .filter(it -> it.getName() != null)
@@ -239,15 +247,15 @@ public class BlockHound {
                                     })
                                     .toArray(Class[]::new)
                     ))
-                    .with(AgentBuilder.TypeStrategy.Default.DECORATE)
-                    .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                    .with(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST)
-                    .with((AgentBuilder.PoolStrategy) (classFileLocator, classLoader) -> new TypePool.Default(
-                            new TypePool.CacheProvider.Simple(),
+                    .with(TypeStrategy.Default.DECORATE)
+                    .with(InitializationStrategy.NoOp.INSTANCE)
+                    .with(DescriptionStrategy.Default.POOL_FIRST)
+                    .with((PoolStrategy) (classFileLocator, classLoader) -> new TypePool.Default(
+                            new CacheProvider.Simple(),
                             classFileLocator,
                             TypePool.Default.ReaderMode.FAST
                     ))
-                    .with(new AgentBuilder.InstallationListener.Adapter() {
+                    .with(new InstallationListener.Adapter() {
                         @Override
                         public void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
                             ClassFileTransformer transformer = new NativeWrappingClassFileTransformer(blockingMethods);
