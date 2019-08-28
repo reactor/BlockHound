@@ -226,6 +226,8 @@ public class BlockHound {
                     onBlockingMethod.accept(new BlockingMethod(className, methodName, modifiers));
                 };
 
+                // Eagerly trigger the classloading of `threadPredicate` (since classloading is blocking)
+                threadPredicate.test(Thread.currentThread());
                 BlockHoundRuntime.threadPredicate = threadPredicate;
 
                 // Trigger classloading of `threadPredicate`
