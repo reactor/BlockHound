@@ -9,18 +9,6 @@ sourceCompatibility = targetCompatibility = 8
 shadowJar {
     classifier = null
 
-    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundLinuxSharedLibrary"))
-    from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/linux/libBlockHound.so"
-
-    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundOsxSharedLibrary"))
-    from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/osx/libBlockHound.dylib"
-
-    dependsOn(tasks.getByPath(":native-agent:externalBuildBlockHoundWindowsSharedLibrary"))
-    from "${rootProject.project(":native-agent").buildDir}/external-build/BlockHound/windows/libBlockHound.dll"
-
-    // See https://github.com/AdoptOpenJDK/openjdk-jdk8u/blob/aa318070b27849f1fe00d14684b2a40f7b29bf79/jdk/src/windows/javavm/export/jvm_md.h#L42
-    rename "libBlockHound.dll", "BlockHound.dll"
-
     manifest {
         attributes('Can-Retransform-Classes': 'true')
         attributes('Can-Set-Native-Method-Prefix': 'true')
@@ -45,11 +33,8 @@ tasks.shadowJar.dependsOn tasks.relocateShadowJar
 dependencies {
     compileOnly 'com.google.auto.service:auto-service:1.0-rc4'
 
-    compile 'org.ow2.asm:asm:7.1'
-    compile 'org.ow2.asm:asm-commons:7.1', {
-        exclude(group: "org.ow2.asm", module: "*")
-    }
-    compile 'net.bytebuddy:byte-buddy-agent:1.9.10'
+    compile 'net.bytebuddy:byte-buddy:1.10.1'
+    compile 'net.bytebuddy:byte-buddy-agent:1.10.1'
 
     compileOnly 'io.projectreactor:reactor-core:3.2.5.RELEASE'
     compileOnly 'io.reactivex.rxjava2:rxjava:2.2.5'

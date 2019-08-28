@@ -17,18 +17,25 @@
 package reactor.blockhound;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
+import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.agent.builder.AgentBuilder.DescriptionStrategy;
+import net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy;
+import net.bytebuddy.agent.builder.AgentBuilder.PoolStrategy;
+import net.bytebuddy.agent.builder.AgentBuilder.RedefinitionStrategy;
+import net.bytebuddy.agent.builder.AgentBuilder.RedefinitionStrategy.DiscoveryStrategy;
+import net.bytebuddy.agent.builder.AgentBuilder.TypeStrategy;
+import net.bytebuddy.asm.Advice;
+import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.pool.TypePool.CacheProvider;
+import net.bytebuddy.utility.JavaModule;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,7 +46,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static java.util.Collections.singleton;
-import static reactor.blockhound.ASMClassFileTransformer.BLOCK_HOUND_RUNTIME_TYPE;
+import static reactor.blockhound.NativeWrappingClassFileTransformer.BLOCK_HOUND_RUNTIME_TYPE;
 
 public class BlockHound {
 
@@ -143,16 +150,20 @@ public class BlockHound {
             }
         }};
 
-        private final Map<Class<?>, Map<String, Boolean>> allowances = new HashMap<Class<?>, Map<String, Boolean>>() {{
-            put(ClassLoader.class, new HashMap<String, Boolean>() {{
+        private final Map<String, Map<String, Boolean>> allowances = new HashMap<String, Map<String, Boolean>>() {{
+            put(ClassLoader.class.getName(), new HashMap<String, Boolean>() {{
                 put("loadClass", true);
             }});
-            put(Throwable.class, new HashMap<String, Boolean>() {{
+            put(Throwable.class.getName(), new HashMap<String, Boolean>() {{
                 put("printStackTrace", true);
             }});
 
-            put(ConcurrentHashMap.class, new HashMap<String, Boolean>() {{
+            put(ConcurrentHashMap.class.getName(), new HashMap<String, Boolean>() {{
                 put("initTable", true);
+            }});
+
+            put(Advice.class.getName(), new HashMap<String, Boolean>() {{
+                put("to", true);
             }});
         }};
 
@@ -174,22 +185,12 @@ public class BlockHound {
         }
 
         public Builder allowBlockingCallsInside(String className, String methodName) {
-            try {
-                allowances.computeIfAbsent(Class.forName(className), __ -> new HashMap<>()).put(methodName, true);
-            }
-            catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
+            allowances.computeIfAbsent(className, __ -> new HashMap<>()).put(methodName, true);
             return this;
         }
 
         public Builder disallowBlockingCallsInside(String className, String methodName) {
-            try {
-                allowances.computeIfAbsent(Class.forName(className), __ -> new HashMap<>()).put(methodName, false);
-            }
-            catch (ClassNotFoundException e) {
-                throw new RuntimeException(e);
-            }
+            allowances.computeIfAbsent(className, __ -> new HashMap<>()).put(methodName, false);
             return this;
         }
 
@@ -218,51 +219,18 @@ public class BlockHound {
                 }
 
                 Instrumentation instrumentation = ByteBuddyAgent.install();
-
                 InstrumentationUtils.injectBootstrapClasses(instrumentation, BLOCK_HOUND_RUNTIME_TYPE.getInternalName());
 
-                final Class<?> runtimeClass;
-                final Method initMethod;
-                try {
-                    runtimeClass = ClassLoader.getSystemClassLoader().getParent().loadClass(BLOCK_HOUND_RUNTIME_TYPE.getClassName());
-                    initMethod = runtimeClass.getMethod("init", String.class);
-                }
-                catch (Throwable e) {
-                    throw new RuntimeException(e);
-                }
-                initMethod.invoke(null, extractNativeLibFile().toString());
-
-                final Method markMethod;
-                try {
-                    markMethod = runtimeClass.getMethod("markMethod", Class.class, String.class, boolean.class);
-                }
-                catch (Throwable e) {
-                    throw new RuntimeException(e);
-                }
-
-                markMethod.invoke(null, runtimeClass, "checkBlocking", true);
-
-                allowances.forEach((clazz, methods) -> methods.forEach((methodName, allowed) -> {
-                    try {
-                        markMethod.invoke(null, clazz, methodName, allowed);
-                    }
-                    catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                }));
-
-                Field blockingMethodConsumerField = runtimeClass.getDeclaredField("blockingMethodConsumer");
-                blockingMethodConsumerField.setAccessible(true);
-                blockingMethodConsumerField.set(null, (Consumer<Object[]>) args -> {
+                BlockHoundRuntime.blockingMethodConsumer = args -> {
                     String className = (String) args[0];
                     String methodName = (String) args[1];
                     int modifiers = (Integer) args[2];
                     onBlockingMethod.accept(new BlockingMethod(className, methodName, modifiers));
-                });
+                };
 
-                Field threadPredicateField = runtimeClass.getDeclaredField("threadPredicate");
-                threadPredicateField.setAccessible(true);
-                threadPredicateField.set(null, threadPredicate);
+                // Eagerly trigger the classloading of `threadPredicate` (since classloading is blocking)
+                threadPredicate.test(Thread.currentThread());
+                BlockHoundRuntime.threadPredicate = threadPredicate;
 
                 instrument(instrumentation);
             }
@@ -272,43 +240,109 @@ public class BlockHound {
         }
 
         private void instrument(Instrumentation instrumentation) throws Exception {
-            ClassFileTransformer transformer = new ASMClassFileTransformer(blockingMethods);
+            ClassFileTransformer transformer = new NativeWrappingClassFileTransformer(blockingMethods);
             instrumentation.addTransformer(transformer, true);
             instrumentation.setNativeMethodPrefix(transformer, PREFIX);
 
-            instrumentation.retransformClasses(
-                    Stream
-                            .of(instrumentation.getAllLoadedClasses())
-                            .filter(it -> {
-                                try {
-                                    String className = it.getName();
-                                    if (className == null) {
+            new AgentBuilder.Default()
+                    .with(RedefinitionStrategy.RETRANSFORMATION)
+                    .with(new DiscoveryStrategy.Explicit(
+                            Stream
+                                    .of(instrumentation.getAllLoadedClasses())
+                                    .filter(it -> it.getName() != null)
+                                    .filter(it -> {
+                                        if (allowances.containsKey(it.getName())) {
+                                            return true;
+                                        }
+
+                                        String internalClassName = it.getName().replace(".", "/");
+                                        if (blockingMethods.containsKey(internalClassName)) {
+                                            return true;
+                                        }
+
                                         return false;
-                                    }
-                                    return blockingMethods.containsKey(className.replace(".", "/"));
-                                }
-                                catch (NoClassDefFoundError e) {
-                                    return false;
-                                }
-                            })
-                            .toArray(Class[]::new)
-            );
+                                    })
+                                    .toArray(Class[]::new)
+                    ))
+                    .with(TypeStrategy.Default.DECORATE)
+                    .with(InitializationStrategy.NoOp.INSTANCE)
+                    .with(DescriptionStrategy.Default.POOL_FIRST)
+                    .with((PoolStrategy) (classFileLocator, classLoader) -> new TypePool.Default(
+                            new CacheProvider.Simple(),
+                            classFileLocator,
+                            TypePool.Default.ReaderMode.FAST
+                    ))
+                    .with(AgentBuilder.Listener.StreamWriting.toSystemError().withErrorsOnly())
+                    // Do not ignore JDK classes
+                    .ignore(ElementMatchers.none())
+                    .type((typeDescription, classLoader, module, classBeingRedefined, protectionDomain) -> {
+                        if (blockingMethods.containsKey(typeDescription.getInternalName())) {
+                            return true;
+                        }
+                        if (allowances.containsKey(typeDescription.getName())) {
+                            return true;
+                        }
+                        return false;
+                    })
+                    .transform(new BlockingCallsTransformer())
+                    .transform(new AllowancesTransformer())
+                    .installOn(instrumentation);
         }
-    }
 
-    private static Path extractNativeLibFile() throws IOException {
-        String nativeLibraryFileName = System.mapLibraryName("BlockHound");
-        URL nativeLibraryURL = BlockHound.class.getResource("/" + nativeLibraryFileName);
+        private class BlockingCallsTransformer implements AgentBuilder.Transformer {
 
-        if (nativeLibraryURL == null) {
-            throw new IllegalStateException("Failed to load the following lib from a classpath: " + nativeLibraryFileName);
+            @Override
+            public DynamicType.Builder<?> transform(
+                    DynamicType.Builder<?> builder,
+                    TypeDescription typeDescription,
+                    ClassLoader classLoader,
+                    JavaModule module
+            ) {
+                Map<String, Set<String>> methods = blockingMethods.get(typeDescription.getInternalName());
+
+                if (methods == null) {
+                    return builder;
+                }
+
+                AsmVisitorWrapper advice = Advice.withCustomMapping()
+                        .bind(BlockingCallAdvice.ModifiersArgument.class, (type, method, assigner, argumentHandler, sort) -> {
+                            return Advice.OffsetMapping.Target.ForStackManipulation.of(method.getModifiers());
+                        })
+                        .to(BlockingCallAdvice.class)
+                        .on(method -> {
+                            Set<String> descriptors = methods.get(method.getName());
+                            return descriptors != null && descriptors.contains(method.getDescriptor());
+                        });
+
+                return builder.visit(advice);
+            }
         }
 
-        Path tempFile = Files.createTempFile("BlockHound", ".dylib");
-        tempFile.toFile().deleteOnExit();
-        try (InputStream inputStream = nativeLibraryURL.openStream()) {
-            Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+        private class AllowancesTransformer implements AgentBuilder.Transformer {
+
+            @Override
+            public DynamicType.Builder<?> transform(
+                    DynamicType.Builder<?> builder,
+                    TypeDescription typeDescription,
+                    ClassLoader classLoader,
+                    JavaModule module
+            ) {
+                Map<String, Boolean> methods = allowances.get(typeDescription.getName());
+
+                if (methods == null) {
+                    return builder;
+                }
+
+                AsmVisitorWrapper advice = Advice
+                        .withCustomMapping()
+                        .bind(AllowAdvice.AllowedArgument.class, (type, method, assigner, argumentHandler, sort) -> {
+                            return Advice.OffsetMapping.Target.ForStackManipulation.of(methods.get(method.getName()));
+                        })
+                        .to(AllowAdvice.class)
+                        .on(method -> methods.containsKey(method.getName()));
+
+                return builder.visit(advice);
+            }
         }
-        return tempFile.toAbsolutePath();
     }
 }

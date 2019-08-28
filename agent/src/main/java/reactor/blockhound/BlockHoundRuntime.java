@@ -21,36 +21,33 @@ import java.util.function.Predicate;
 
 // Warning!!! This class MUST NOT be loaded by any classloader other than the bootstrap one.
 // Otherwise, non-bootstrap classes will be referring to it, but only the bootstrap one gets
-// initialized and linked to the native library.
+// initialized.
 public class BlockHoundRuntime {
 
     @SuppressWarnings("unused")
-    public static void init(String nativeLibraryFileName) {
-        System.load(nativeLibraryFileName);
-    }
+    public static volatile Consumer<Object[]> blockingMethodConsumer;
 
     @SuppressWarnings("unused")
-    public static native void markMethod(Class clazz, String methodName, boolean allowed);
+    public static volatile Predicate<Thread> threadPredicate;
 
-    private static native boolean isBlocking();
-
-    @SuppressWarnings("unused")
-    private static volatile Consumer<Object[]> blockingMethodConsumer;
-
-    @SuppressWarnings("unused")
-    private static volatile Predicate<Thread> threadPredicate;
-
-    private static final ThreadLocal<Boolean> IS_NON_BLOCKING = ThreadLocal.withInitial(() -> {
-        return threadPredicate.test(Thread.currentThread());
+    public static final ThreadLocal<Boolean> IS_ALLOWED = ThreadLocal.withInitial(() -> {
+        if (threadPredicate.test(Thread.currentThread())) {
+            return false;
+        }
+        else {
+            // Optimization: use Three-state (true, false, null) where `null` is `not non-blocking`
+            return null;
+        }
     });
 
     @SuppressWarnings("unused")
-    public static void checkBlocking(String className, String methodName, int modifiers) {
-        if (!IS_NON_BLOCKING.get()) {
-            return;
-        }
-        if (isBlocking()) {
-            blockingMethodConsumer.accept(new Object[] { className, methodName, modifiers });
+    public static void checkBlocking(String internalClassName, String methodName, int modifiers) {
+        if (Boolean.FALSE == IS_ALLOWED.get()) {
+            blockingMethodConsumer.accept(new Object[] {
+                    internalClassName.replace("/", "."),
+                    methodName,
+                    modifiers
+            });
         }
     }
 }

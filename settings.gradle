@@ -2,7 +2,6 @@ rootProject.name = 'reactor-block-hound'
 
 
 include 'agent'
-include 'native-agent'
 include 'example'
 include 'junit-platform'
 include 'benchmarks'
