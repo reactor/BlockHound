@@ -229,6 +229,16 @@ public class BlockHound {
         private void instrument(Instrumentation instrumentation) throws Exception {
             new AgentBuilder.Default()
                     .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                    .with(new AgentBuilder.RedefinitionStrategy.DiscoveryStrategy.Explicit(
+                            Stream
+                                    .of(instrumentation.getAllLoadedClasses())
+                                    .filter(it -> it.getName() != null)
+                                    .filter(it -> {
+                                        return blockingMethods.containsKey(it.getName().replace(".", "/")) ||
+                                                allowances.containsKey(it.getName());
+                                    })
+                                    .toArray(Class[]::new)
+                    ))
                     .with(AgentBuilder.TypeStrategy.Default.DECORATE)
                     .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                     .with(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST)
