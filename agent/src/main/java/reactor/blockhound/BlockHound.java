@@ -18,8 +18,10 @@ package reactor.blockhound;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
+import net.bytebuddy.agent.builder.ResettableClassFileTransformer;
 import net.bytebuddy.asm.Advice;
 import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.pool.TypePool;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
 import java.lang.instrument.ClassFileTransformer;
@@ -225,27 +227,24 @@ public class BlockHound {
         }
 
         private void instrument(Instrumentation instrumentation) throws Exception {
-            ClassFileTransformer transformer = new NativeWrappingClassFileTransformer(blockingMethods);
-            instrumentation.addTransformer(transformer, true);
-            instrumentation.setNativeMethodPrefix(transformer, PREFIX);
-
-            // Retransform all native methods first so that ByteBuddy does not treat them as native
-            Class[] allLoadedClasses = instrumentation.getAllLoadedClasses();
-            Predicate<Class> blockingMethodPredicate = it -> {
-                return blockingMethods.containsKey(it.getName().replace(".", "/"));
-            };
-            instrumentation.retransformClasses(
-                    Stream
-                            .of(allLoadedClasses)
-                            .filter(it -> it.getName() != null)
-                            .filter(blockingMethodPredicate)
-                            .toArray(Class[]::new)
-            );
-
             new AgentBuilder.Default()
                     .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                     .with(AgentBuilder.TypeStrategy.Default.DECORATE)
                     .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                    .with(AgentBuilder.DescriptionStrategy.Default.POOL_FIRST)
+                    .with((AgentBuilder.PoolStrategy) (classFileLocator, classLoader) -> new TypePool.Default(
+                            new TypePool.CacheProvider.Simple(),
+                            classFileLocator,
+                            TypePool.Default.ReaderMode.FAST
+                    ))
+                    .with(new AgentBuilder.InstallationListener.Adapter() {
+                        @Override
+                        public void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
+                            ClassFileTransformer transformer = new NativeWrappingClassFileTransformer(blockingMethods);
+                            instrumentation.addTransformer(transformer, true);
+                            instrumentation.setNativeMethodPrefix(transformer, PREFIX);
+                        }
+                    })
                     // Do not ignore JDK classes
                     .ignore(ElementMatchers.none())
                     .type((typeDescription, classLoader, module, classBeingRedefined, protectionDomain) -> {
@@ -274,36 +273,20 @@ public class BlockHound {
                         Map<String, Boolean> allowanceMethods = allowances.get(typeDescription.getName());
 
                         if (allowanceMethods != null) {
-                            builder = builder
-                                    .visit(
-                                            Advice
-                                                    .withCustomMapping()
-                                                    .bind(AllowAdvice.AllowedArgument.class, true)
-                                                    .to(AllowAdvice.class)
-                                                    .on(method -> Boolean.TRUE.equals(allowanceMethods.get(method.getName())))
-                                    )
-                                    .visit(
-                                            Advice
-                                                    .withCustomMapping()
-                                                    .bind(AllowAdvice.AllowedArgument.class, false)
-                                                    .to(AllowAdvice.class)
-                                                    .on(method -> Boolean.FALSE.equals(allowanceMethods.get(method.getName())))
-                                    );
+                            builder = builder.visit(
+                                    Advice
+                                            .withCustomMapping()
+                                            .bind(AllowAdvice.AllowedArgument.class, (instrumentedType, instrumentedMethod, assigner, argumentHandler, sort) -> {
+                                                return Advice.OffsetMapping.Target.ForStackManipulation.of(allowanceMethods.get(instrumentedMethod.getName()));
+                                            })
+                                            .to(AllowAdvice.class)
+                                            .on(method -> allowanceMethods.containsKey(method.getName()))
+                            );
                         }
 
                         return builder;
                     })
                     .installOn(instrumentation);
-
-            HashSet<Class> previouslyLoadedClasses = new HashSet<>(Arrays.asList(allLoadedClasses));
-            instrumentation.retransformClasses(
-                    Stream
-                            .of(allLoadedClasses)
-                            .filter(it -> it.getName() != null)
-                            .filter(it -> !previouslyLoadedClasses.contains(it))
-                            .filter(blockingMethodPredicate.or(it -> allowances.containsKey(it.getName())))
-                            .toArray(Class[]::new)
-            );
         }
     }
 }

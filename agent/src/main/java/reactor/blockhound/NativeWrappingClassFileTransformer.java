@@ -75,9 +75,9 @@ class NativeWrappingClassFileTransformer implements ClassFileTransformer {
 
         private final Map<String, Set<String>> methods;
 
-        NativeWrappingClassVisitor(ClassVisitor cw, Map<String, Set<String>> methods, String className) {
+        NativeWrappingClassVisitor(ClassVisitor cw, Map<String, Set<String>> methods, String internalClassName) {
             super(ASM7, cw);
-            this.className = className;
+            this.className = internalClassName;
             this.methods = methods;
         }
 
