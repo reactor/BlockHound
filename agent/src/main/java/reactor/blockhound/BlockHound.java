@@ -20,16 +20,18 @@ import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.agent.builder.AgentBuilder;
 import net.bytebuddy.agent.builder.AgentBuilder.DescriptionStrategy;
 import net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy;
-import net.bytebuddy.agent.builder.AgentBuilder.InstallationListener;
 import net.bytebuddy.agent.builder.AgentBuilder.PoolStrategy;
 import net.bytebuddy.agent.builder.AgentBuilder.RedefinitionStrategy;
 import net.bytebuddy.agent.builder.AgentBuilder.RedefinitionStrategy.DiscoveryStrategy;
 import net.bytebuddy.agent.builder.AgentBuilder.TypeStrategy;
-import net.bytebuddy.agent.builder.ResettableClassFileTransformer;
 import net.bytebuddy.asm.Advice;
+import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.pool.TypePool.CacheProvider;
+import net.bytebuddy.utility.JavaModule;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
 import java.lang.instrument.ClassFileTransformer;
@@ -238,6 +240,10 @@ public class BlockHound {
         }
 
         private void instrument(Instrumentation instrumentation) throws Exception {
+            ClassFileTransformer transformer = new NativeWrappingClassFileTransformer(blockingMethods);
+            instrumentation.addTransformer(transformer, true);
+            instrumentation.setNativeMethodPrefix(transformer, PREFIX);
+
             new AgentBuilder.Default()
                     .with(RedefinitionStrategy.RETRANSFORMATION)
                     .with(new DiscoveryStrategy.Explicit(
@@ -245,8 +251,16 @@ public class BlockHound {
                                     .of(instrumentation.getAllLoadedClasses())
                                     .filter(it -> it.getName() != null)
                                     .filter(it -> {
-                                        return blockingMethods.containsKey(it.getName().replace(".", "/")) ||
-                                                allowances.containsKey(it.getName());
+                                        if (allowances.containsKey(it.getName())) {
+                                            return true;
+                                        }
+
+                                        String internalClassName = it.getName().replace(".", "/");
+                                        if (blockingMethods.containsKey(internalClassName)) {
+                                            return true;
+                                        }
+
+                                        return false;
                                     })
                                     .toArray(Class[]::new)
                     ))
@@ -259,56 +273,76 @@ public class BlockHound {
                             TypePool.Default.ReaderMode.FAST
                     ))
                     .with(AgentBuilder.Listener.StreamWriting.toSystemError().withErrorsOnly())
-                    .with(new InstallationListener.Adapter() {
-                        @Override
-                        public void onBeforeInstall(Instrumentation instrumentation, ResettableClassFileTransformer classFileTransformer) {
-                            ClassFileTransformer transformer = new NativeWrappingClassFileTransformer(blockingMethods);
-                            instrumentation.addTransformer(transformer, true);
-                            instrumentation.setNativeMethodPrefix(transformer, PREFIX);
-                        }
-                    })
                     // Do not ignore JDK classes
                     .ignore(ElementMatchers.none())
                     .type((typeDescription, classLoader, module, classBeingRedefined, protectionDomain) -> {
-                        return blockingMethods.containsKey(typeDescription.getInternalName()) || allowances.containsKey(typeDescription.getName());
-                    })
-                    .transform((builder, typeDescription, classLoader, module) -> {
-                        Map<String, Set<String>> blockingMethodsOfClass = blockingMethods.get(typeDescription.getInternalName());
-
-                        if (blockingMethodsOfClass != null) {
-                            builder = builder.visit(
-                                    Advice.withCustomMapping()
-                                            .bind(
-                                                    BlockingCallAdvice.ModifiersArgument.class,
-                                                    (instrumentedType, instrumentedMethod, assigner, argumentHandler, sort) -> {
-                                                        return Advice.OffsetMapping.Target.ForStackManipulation.of(instrumentedMethod.getModifiers());
-                                                    }
-                                            )
-                                            .to(BlockingCallAdvice.class)
-                                            .on(method -> {
-                                                Set<String> descriptors = blockingMethodsOfClass.get(method.getName());
-                                                return descriptors != null && descriptors.contains(method.getDescriptor());
-                                            })
-                            );
+                        if (blockingMethods.containsKey(typeDescription.getInternalName())) {
+                            return true;
                         }
-
-                        Map<String, Boolean> allowanceMethods = allowances.get(typeDescription.getName());
-
-                        if (allowanceMethods != null) {
-                            builder = builder.visit(
-                                    Advice
-                                            .withCustomMapping()
-                                            .bind(AllowAdvice.AllowedArgument.class, (instrumentedType, instrumentedMethod, assigner, argumentHandler, sort) -> {
-                                                return Advice.OffsetMapping.Target.ForStackManipulation.of(allowanceMethods.get(instrumentedMethod.getName()));
-                                            })
-                                            .to(AllowAdvice.class)
-                                            .on(method -> allowanceMethods.containsKey(method.getName()))
-                            );
+                        if (allowances.containsKey(typeDescription.getName())) {
+                            return true;
                         }
-
-                        return builder;
+                        return false;
                     })
+                    .transform(new BlockingCallsTransformer())
+                    .transform(new AllowancesTransformer())
                     .installOn(instrumentation);
+        }
+
+        private class BlockingCallsTransformer implements AgentBuilder.Transformer {
+
+            @Override
+            public DynamicType.Builder<?> transform(
+                    DynamicType.Builder<?> builder,
+                    TypeDescription typeDescription,
+                    ClassLoader classLoader,
+                    JavaModule module
+            ) {
+                Map<String, Set<String>> methods = blockingMethods.get(typeDescription.getInternalName());
+
+                if (methods == null) {
+                    return builder;
+                }
+
+                AsmVisitorWrapper advice = Advice.withCustomMapping()
+                        .bind(BlockingCallAdvice.ModifiersArgument.class, (type, method, assigner, argumentHandler, sort) -> {
+                            return Advice.OffsetMapping.Target.ForStackManipulation.of(method.getModifiers());
+                        })
+                        .to(BlockingCallAdvice.class)
+                        .on(method -> {
+                            Set<String> descriptors = methods.get(method.getName());
+                            return descriptors != null && descriptors.contains(method.getDescriptor());
+                        });
+
+                return builder.visit(advice);
+            }
+        }
+
+        private class AllowancesTransformer implements AgentBuilder.Transformer {
+
+            @Override
+            public DynamicType.Builder<?> transform(
+                    DynamicType.Builder<?> builder,
+                    TypeDescription typeDescription,
+                    ClassLoader classLoader,
+                    JavaModule module
+            ) {
+                Map<String, Boolean> methods = allowances.get(typeDescription.getName());
+
+                if (methods == null) {
+                    return builder;
+                }
+
+                AsmVisitorWrapper advice = Advice
+                        .withCustomMapping()
+                        .bind(AllowAdvice.AllowedArgument.class, (type, method, assigner, argumentHandler, sort) -> {
+                            return Advice.OffsetMapping.Target.ForStackManipulation.of(methods.get(method.getName()));
+                        })
+                        .to(AllowAdvice.class)
+                        .on(method -> methods.containsKey(method.getName()));
+
+                return builder.visit(advice);
+            }
         }
     }
 }
