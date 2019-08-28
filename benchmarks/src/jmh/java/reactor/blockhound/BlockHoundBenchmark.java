@@ -17,7 +17,6 @@ package reactor.blockhound;
 
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Fork;
 import org.openjdk.jmh.annotations.Measurement;
 import org.openjdk.jmh.annotations.Mode;
 import org.openjdk.jmh.annotations.OperationsPerInvocation;
@@ -36,7 +35,6 @@ import java.util.concurrent.atomic.AtomicLong;
 @BenchmarkMode({Mode.AverageTime})
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @OperationsPerInvocation(BlockHoundBenchmark.OPERATIONS_PER_INVOCATION)
-@Fork(3)
 public class BlockHoundBenchmark {
 
     static {
@@ -78,20 +76,20 @@ public class BlockHoundBenchmark {
         }
     }
 
-//    @Benchmark
-//    public void baselineNonBlockingCall() throws Exception {
-//        Thread thread = new Thread(runMultipleTimes(BlockHoundBenchmark::nonBlockingCall));
-//        thread.start();
-//        thread.join(5_000);
-//    }
-//
-//    @Benchmark
-//    public void measureNonBlockingCall(BlockHoundInstalledState state) throws Exception {
-//        Thread thread = new NonBlockingThread(runMultipleTimes(BlockHoundBenchmark::nonBlockingCall));
-//        thread.start();
-//        thread.join(5_000);
-//    }
-//
+    @Benchmark
+    public void baselineNonBlockingCall() throws Exception {
+        Thread thread = new Thread(runMultipleTimes(BlockHoundBenchmark::nonBlockingCall));
+        thread.start();
+        thread.join(5_000);
+    }
+
+    @Benchmark
+    public void measureNonBlockingCall(BlockHoundInstalledState state) throws Exception {
+        Thread thread = new NonBlockingThread(runMultipleTimes(BlockHoundBenchmark::nonBlockingCall));
+        thread.start();
+        thread.join(5_000);
+    }
+
     @Benchmark
     public void baselineBlockingCallInBlockingThread() throws Exception {
         Thread thread = new Thread(runMultipleTimes(BlockHoundBenchmark::blockingCall));
@@ -105,13 +103,13 @@ public class BlockHoundBenchmark {
         thread.start();
         thread.join(5_000);
     }
-//
-//    @Benchmark
-//    public void baselineAllowedBlockingCall() throws Exception {
-//        Thread thread = new Thread(runMultipleTimes(BlockHoundBenchmark::allowsBlockingCalls));
-//        thread.start();
-//        thread.join(5_000);
-//    }
+
+    @Benchmark
+    public void baselineAllowedBlockingCall() throws Exception {
+        Thread thread = new Thread(runMultipleTimes(BlockHoundBenchmark::allowsBlockingCalls));
+        thread.start();
+        thread.join(5_000);
+    }
 
     @Benchmark
     public void measureAllowedBlockingCall(BlockHoundInstalledState state) throws Exception {
