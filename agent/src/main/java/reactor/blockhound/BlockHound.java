@@ -25,13 +25,9 @@ import net.bytebuddy.agent.builder.AgentBuilder.RedefinitionStrategy;
 import net.bytebuddy.agent.builder.AgentBuilder.RedefinitionStrategy.DiscoveryStrategy;
 import net.bytebuddy.agent.builder.AgentBuilder.TypeStrategy;
 import net.bytebuddy.asm.Advice;
-import net.bytebuddy.asm.AsmVisitorWrapper;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.pool.TypePool.CacheProvider;
-import net.bytebuddy.utility.JavaModule;
 import reactor.blockhound.integration.BlockHoundIntegration;
 
 import java.lang.instrument.ClassFileTransformer;
@@ -221,6 +217,8 @@ public class BlockHound {
                 Instrumentation instrumentation = ByteBuddyAgent.install();
                 InstrumentationUtils.injectBootstrapClasses(instrumentation, BLOCK_HOUND_RUNTIME_TYPE.getInternalName());
 
+                // Since BlockHoundRuntime is injected into the bootstrap classloader,
+                // we use raw Object[] here instead of `BlockingMethod` to avoid classloading issues
                 BlockHoundRuntime.blockingMethodConsumer = args -> {
                     String className = (String) args[0];
                     String methodName = (String) args[1];
@@ -239,13 +237,15 @@ public class BlockHound {
             }
         }
 
-        private void instrument(Instrumentation instrumentation) throws Exception {
+        private void instrument(Instrumentation instrumentation) {
             ClassFileTransformer transformer = new NativeWrappingClassFileTransformer(blockingMethods);
             instrumentation.addTransformer(transformer, true);
             instrumentation.setNativeMethodPrefix(transformer, PREFIX);
 
             new AgentBuilder.Default()
                     .with(RedefinitionStrategy.RETRANSFORMATION)
+                    // Explicit strategy is almost 2 times faster than SinglePass
+                    // TODO https://github.com/raphw/byte-buddy/issues/715
                     .with(new DiscoveryStrategy.Explicit(
                             Stream
                                     .of(instrumentation.getAllLoadedClasses())
@@ -266,83 +266,33 @@ public class BlockHound {
                     ))
                     .with(TypeStrategy.Default.DECORATE)
                     .with(InitializationStrategy.NoOp.INSTANCE)
+                    // this DescriptionStrategy is required to force ByteBuddy to parse the bytes
+                    // and not cache them, since we run another transformer (see NativeWrappingClassFileTransformer)
+                    // before ByteBuddy
                     .with(DescriptionStrategy.Default.POOL_FIRST)
+                    // Override PoolStrategy because the default one will cache java.lang.Object,
+                    // and we need to instrument it.
                     .with((PoolStrategy) (classFileLocator, classLoader) -> new TypePool.Default(
                             new CacheProvider.Simple(),
                             classFileLocator,
                             TypePool.Default.ReaderMode.FAST
                     ))
                     .with(AgentBuilder.Listener.StreamWriting.toSystemError().withErrorsOnly())
+
                     // Do not ignore JDK classes
                     .ignore(ElementMatchers.none())
-                    .type((typeDescription, classLoader, module, classBeingRedefined, protectionDomain) -> {
-                        if (blockingMethods.containsKey(typeDescription.getInternalName())) {
-                            return true;
-                        }
-                        if (allowances.containsKey(typeDescription.getName())) {
-                            return true;
-                        }
-                        return false;
-                    })
-                    .transform(new BlockingCallsTransformer())
-                    .transform(new AllowancesTransformer())
+
+                    // Instrument blocking calls
+                    .type(it -> blockingMethods.containsKey(it.getInternalName()))
+                    .transform(new BlockingCallsByteBuddyTransformer(blockingMethods))
+                    .asTerminalTransformation()
+
+                    // Instrument allowed/disallowed methods
+                    .type(it -> allowances.containsKey(it.getName()))
+                    .transform(new AllowancesByteBuddyTransformer(allowances))
+                    .asTerminalTransformation()
+
                     .installOn(instrumentation);
-        }
-
-        private class BlockingCallsTransformer implements AgentBuilder.Transformer {
-
-            @Override
-            public DynamicType.Builder<?> transform(
-                    DynamicType.Builder<?> builder,
-                    TypeDescription typeDescription,
-                    ClassLoader classLoader,
-                    JavaModule module
-            ) {
-                Map<String, Set<String>> methods = blockingMethods.get(typeDescription.getInternalName());
-
-                if (methods == null) {
-                    return builder;
-                }
-
-                AsmVisitorWrapper advice = Advice.withCustomMapping()
-                        .bind(BlockingCallAdvice.ModifiersArgument.class, (type, method, assigner, argumentHandler, sort) -> {
-                            return Advice.OffsetMapping.Target.ForStackManipulation.of(method.getModifiers());
-                        })
-                        .to(BlockingCallAdvice.class)
-                        .on(method -> {
-                            Set<String> descriptors = methods.get(method.getName());
-                            return descriptors != null && descriptors.contains(method.getDescriptor());
-                        });
-
-                return builder.visit(advice);
-            }
-        }
-
-        private class AllowancesTransformer implements AgentBuilder.Transformer {
-
-            @Override
-            public DynamicType.Builder<?> transform(
-                    DynamicType.Builder<?> builder,
-                    TypeDescription typeDescription,
-                    ClassLoader classLoader,
-                    JavaModule module
-            ) {
-                Map<String, Boolean> methods = allowances.get(typeDescription.getName());
-
-                if (methods == null) {
-                    return builder;
-                }
-
-                AsmVisitorWrapper advice = Advice
-                        .withCustomMapping()
-                        .bind(AllowAdvice.AllowedArgument.class, (type, method, assigner, argumentHandler, sort) -> {
-                            return Advice.OffsetMapping.Target.ForStackManipulation.of(methods.get(method.getName()));
-                        })
-                        .to(AllowAdvice.class)
-                        .on(method -> methods.containsKey(method.getName()));
-
-                return builder.visit(advice);
-            }
         }
     }
 }
