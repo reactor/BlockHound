@@ -37,9 +37,9 @@ import java.util.Map;
  */
 class AllowancesByteBuddyTransformer implements AgentBuilder.Transformer {
 
-    private Map<String, Map<String, Boolean>> allowances;
+    private Map<String, Map<String, Map<String, Boolean>>> allowances;
 
-    AllowancesByteBuddyTransformer(Map<String, Map<String, Boolean>> allowances) {
+    AllowancesByteBuddyTransformer(Map<String, Map<String, Map<String, Boolean>>> allowances) {
         this.allowances = allowances;
     }
 
@@ -50,7 +50,7 @@ class AllowancesByteBuddyTransformer implements AgentBuilder.Transformer {
             ClassLoader classLoader,
             JavaModule module
     ) {
-        Map<String, Boolean> methods = allowances.get(typeDescription.getName());
+        Map<String, Map<String, Boolean>> methods = allowances.get(typeDescription.getName());
 
         if (methods == null) {
             return builder;
@@ -60,7 +60,14 @@ class AllowancesByteBuddyTransformer implements AgentBuilder.Transformer {
                 .withCustomMapping()
                 .bind(new AllowedArgument.Factory(methods))
                 .to(AllowAdvice.class)
-                .on(method -> methods.containsKey(method.getName()));
+                .on(method -> {
+                    Map<String, Boolean> byDescriptor = methods.get(method.getName());
+                    if (byDescriptor == null) {
+                        return false;
+                    }
+
+                    return byDescriptor.containsKey("*") || byDescriptor.containsKey(method.getDescriptor());
+                });
 
         return builder.visit(advice);
     }
@@ -76,9 +83,9 @@ class AllowancesByteBuddyTransformer implements AgentBuilder.Transformer {
          */
         class Factory implements Advice.OffsetMapping.Factory<AllowedArgument> {
 
-            final Map<String, Boolean> methods;
+            final Map<String, Map<String, Boolean>> methods;
 
-            Factory(Map<String, Boolean> methods) {
+            Factory(Map<String, Map<String, Boolean>> methods) {
                 this.methods = methods;
             }
 
@@ -94,7 +101,12 @@ class AllowancesByteBuddyTransformer implements AgentBuilder.Transformer {
                     AdviceType adviceType
             ) {
                 return (instrumentedType, instrumentedMethod, assigner, argumentHandler, sort) -> {
-                    boolean allowed = methods.get(instrumentedMethod.getName());
+                    Map<String, Boolean> byDescriptor = methods.get(instrumentedMethod.getName());
+
+                    Boolean allowed = byDescriptor.get(instrumentedMethod.getDescriptor());
+                    if (allowed == null) {
+                        allowed = byDescriptor.get("*");
+                    }
                     return Advice.OffsetMapping.Target.ForStackManipulation.of(allowed);
                 };
             }
