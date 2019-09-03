@@ -48,5 +48,5 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile 'org.assertj:assertj-core:3.11.1'
 
-    reactor_3_3_x 'io.projectreactor:reactor-core:3.3.0.M3'
+    reactor_3_3_x 'io.projectreactor:reactor-core:3.3.0.RC1'
 }
