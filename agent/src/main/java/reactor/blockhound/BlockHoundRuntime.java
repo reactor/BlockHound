@@ -22,15 +22,15 @@ import java.util.function.Predicate;
 // Warning!!! This class MUST NOT be loaded by any classloader other than the bootstrap one.
 // Otherwise, non-bootstrap classes will be referring to it, but only the bootstrap one gets
 // initialized.
-public class BlockHoundRuntime {
+class BlockHoundRuntime {
 
     @SuppressWarnings("unused")
-    public static volatile Consumer<Object[]> blockingMethodConsumer;
+    static volatile Consumer<Object[]> blockingMethodConsumer;
 
     @SuppressWarnings("unused")
-    public static volatile Predicate<Thread> threadPredicate;
+    static volatile Predicate<Thread> threadPredicate;
 
-    public static final ThreadLocal<Boolean> IS_ALLOWED = ThreadLocal.withInitial(() -> {
+    static final ThreadLocal<Boolean> IS_ALLOWED = ThreadLocal.withInitial(() -> {
         if (threadPredicate.test(Thread.currentThread())) {
             return false;
         }
@@ -41,7 +41,7 @@ public class BlockHoundRuntime {
     });
 
     @SuppressWarnings("unused")
-    public static void checkBlocking(String internalClassName, String methodName, int modifiers) {
+    static void checkBlocking(String internalClassName, String methodName, int modifiers) {
         if (Boolean.FALSE == IS_ALLOWED.get()) {
             blockingMethodConsumer.accept(new Object[] {
                     internalClassName.replace("/", "."),
