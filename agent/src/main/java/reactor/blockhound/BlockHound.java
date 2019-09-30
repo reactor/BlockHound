@@ -208,7 +208,7 @@ public class BlockHound {
             allowances
                     .computeIfAbsent(className, __ -> new HashMap<>())
                     .computeIfAbsent(methodName, __ -> new HashMap<>())
-                    .put("*", false);
+                    .put(descriptor, false);
             return this;
         }
 
