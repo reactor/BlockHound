@@ -18,8 +18,23 @@ package reactor.blockhound.integration;
 
 import reactor.blockhound.BlockHound;
 
+/**
+ * An interface that defines the contract for the BlockHound integrations.
+ *
+ * {@link BlockHoundIntegration#applyTo(BlockHound.Builder)} will receive an instance
+ * of the builder that is being installed.
+ *
+ * One can override {@link Comparable#compareTo(Object)} to ensure the order in case
+ * one needs to run an integration before or after another.
+ */
 public interface BlockHoundIntegration extends Comparable<BlockHoundIntegration> {
 
+    /**
+     * Lets an integration apply the customizations (see {@link BlockHound.Builder})
+     * before BlockHound is installed.
+     *
+     * @param builder an instance of {@link BlockHound.Builder} that is being installed
+     */
     void applyTo(BlockHound.Builder builder);
 
     @Override
