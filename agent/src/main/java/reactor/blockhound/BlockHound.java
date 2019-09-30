@@ -192,6 +192,18 @@ public class BlockHound {
             return allowBlockingCallsInside(className, methodName, "*");
         }
 
+        /**
+         * Allows blocking calls inside a method of a class with name identified by the provided className
+         * and that matches both provided methodName and descriptor.
+         *
+         * The descriptor should be in JVM's format:
+         * https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/types.html#wp276
+         *
+         * @param className class' name (e.g. "java.lang.Thread")
+         * @param methodName a method name
+         * @param descriptor a method descriptor (in JVM's format)
+         * @return this
+         */
         public Builder allowBlockingCallsInside(String className, String methodName, String descriptor) {
             allowances
                     .computeIfAbsent(className, __ -> new HashMap<>())
@@ -204,6 +216,18 @@ public class BlockHound {
             return disallowBlockingCallsInside(className, methodName, "*");
         }
 
+        /**
+         * Disallows blocking calls inside a method of a class with name identified by the provided className
+         * and that matches both provided methodName and descriptor.
+         *
+         * The descriptor should be in JVM's format:
+         * https://docs.oracle.com/javase/7/docs/technotes/guides/jni/spec/types.html#wp276
+         *
+         * @param className class' name (e.g. "java.lang.Thread")
+         * @param methodName a method name
+         * @param descriptor a method descriptor (in JVM's format)
+         * @return this
+         */
         public Builder disallowBlockingCallsInside(String className, String methodName, String descriptor) {
             allowances
                     .computeIfAbsent(className, __ -> new HashMap<>())
