@@ -268,7 +268,7 @@ public class BlockHound {
          *
          * Warning! Consider always using {@link Predicate#or(Predicate)} and not override the previous one:
          * <code>
-         * nonBlockingThreadPredicate(current -> current.or(MyMarker.class::isInstance))
+         * nonBlockingThreadPredicate(current -&gt; current.or(MyMarker.class::isInstance))
          * </code>
          *
          * @param function a function to immediately apply on the current instance of the predicate
