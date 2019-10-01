@@ -317,9 +317,7 @@ public class BlockHound {
                 threadPredicate.test(Thread.currentThread());
                 BlockHoundRuntime.threadPredicate = threadPredicate;
 
-                java.time.Instant before = java.time.Instant.now();
                 instrument(instrumentation);
-                System.out.println("Instrumentation took  " + java.time.Duration.between(before, java.time.Instant.now()));
             }
             catch (Throwable e) {
                 throw new RuntimeException(e);
