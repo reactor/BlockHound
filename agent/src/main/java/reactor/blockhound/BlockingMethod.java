@@ -32,14 +32,23 @@ public class BlockingMethod {
         this.modifiers = modifiers;
     }
 
+    /**
+     * @return a class' name of the detected blocking call (e.g. "java.lang.Thread")
+     */
     public String getClassName() {
         return className;
     }
 
+    /**
+     * @return a blocking method's name (e.g. "sleep").
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * @return a blocking methods' modifiers. see https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html
+     */
     public int getModifiers() {
         return modifiers;
     }
