@@ -81,6 +81,7 @@ public class BlockHound {
      * and installs the BlockHound instrumentation.
      * If you don't want to load the integrations, use {@link #builder()} method.
      *
+     * @param integrations an array of integrations to automatically apply on the intermediate builder
      * @see BlockHound#builder()
      */
     public static void install(BlockHoundIntegration... integrations) {
