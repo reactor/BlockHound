@@ -17,9 +17,7 @@
 package reactor.blockhound.integration;
 
 import com.google.auto.service.AutoService;
-import io.reactivex.functions.Function;
 import io.reactivex.internal.schedulers.NonBlockingThread;
-import io.reactivex.plugins.RxJavaPlugins;
 import reactor.blockhound.BlockHound;
 
 @AutoService(BlockHoundIntegration.class)
@@ -34,32 +32,6 @@ public class RxJava2Integration implements BlockHoundIntegration {
             return;
         }
 
-        Function<? super Runnable, ? extends Runnable> oldHandler = RxJavaPlugins.getScheduleHandler();
-
-        RxJavaPlugins.setScheduleHandler(
-                oldHandler != null
-                        ? r -> new MarkerRunnable(oldHandler.apply(r))
-                        : MarkerRunnable::new
-        );
-
         builder.nonBlockingThreadPredicate(current -> current.or(NonBlockingThread.class::isInstance));
-
-        // TODO more places?
-        builder.disallowBlockingCallsInside(MarkerRunnable.class.getName(), "run");
     }
-
-    static class MarkerRunnable implements Runnable {
-
-        final Runnable runnable;
-
-        public MarkerRunnable(Runnable runnable) {
-            this.runnable = runnable;
-        }
-
-        @Override
-        public void run() {
-            runnable.run();
-        }
-    }
-
 }
