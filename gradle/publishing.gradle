@@ -1,0 +1,32 @@
+plugins.withType(MavenPublishPlugin) {
+    project.publishing {
+        publications {
+            mavenJava(MavenPublication) { publication ->
+                pom {
+                    description = 'Java agent to detect blocking calls from non-blocking threads.'
+                    name = project.description ?: description
+                    url = 'https://github.com/reactor/BlockHound'
+                    licenses {
+                        license {
+                            name = 'Apache License, Version 2.0'
+                            url = 'https://www.apache.org/licenses/LICENSE-2.0.txt'
+                            distribution = 'repo'
+                        }
+                    }
+                    scm {
+                        url = 'https://github.com/reactor/BlockHound/'
+                        connection = 'scm:git:git://github.com/reactor/BlockHound.git'
+                        developerConnection = 'scm:git:ssh://git@github.com/reactor/BlockHound.git'
+                    }
+                    developers {
+                        developer {
+                            id = 'bsideup'
+                            name = 'Sergei Egorov'
+                            email = 'segorov@pivotal.io'
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

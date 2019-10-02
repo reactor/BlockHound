@@ -1,4 +1,6 @@
 subprojects {
+    apply from: "$rootDir/gradle/publishing.gradle"
+
     group = "io.projectreactor.tools"
 
     repositories {
