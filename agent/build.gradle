@@ -4,6 +4,8 @@ plugins {
     id "maven-publish"
 }
 
+description = "BlockHound Java Agent"
+
 sourceCompatibility = targetCompatibility = 8
 
 shadowJar {

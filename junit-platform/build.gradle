@@ -3,6 +3,8 @@ plugins {
     id "maven-publish"
 }
 
+description = "BlockHound JUnit Platform Integration"
+
 sourceCompatibility = targetCompatibility = 8
 
 repositories {
