@@ -94,6 +94,10 @@ public class BlockHound {
         builder.install();
     }
 
+    private BlockHound() {
+
+    }
+
     public static class Builder {
 
         private final Map<String, Map<String, Set<String>>> blockingMethods = new HashMap<String, Map<String, Set<String>>>() {{
