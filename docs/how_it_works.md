@@ -1,9 +1,10 @@
 # How it works
 
-BlockHound is a Java Agent with a JNI helper.
+BlockHound is a Java Agent.
 
 It instruments the pre-defined set of blocking methods (see [customization](customization.md))
-in the JVM and adds a special check (via JNI method) whether current thread is blocking or not before calling the callback.
+in the JVM and adds a special check before calling the callback
+(see [Blocking call decision](#Blocking-call-decision)).
 
 ## Blocking Java method detection
 To detect blocking Java methods, BlockHound alters the bytecode of a method and adds the following line at the beginning of the method's body:
@@ -17,9 +18,7 @@ public void connect(SocketAddress endpoint, int timeout) {
     );
 ```
 
-`checkBlocking` will delegate to the JNI helper and maybe call the "blocking method detected" callback.
-
-The arguments are passed to the callback, but not used in the "blocking call" decision making.
+See [Blocking call decision](#Blocking-call-decision) for the details of how `checkBlocking` works.
 
 ## Blocking JVM native method detection
 Since native methods in JVM can't be instrumented (they have no body), we use JVM's native method instrumentation technique.
@@ -44,7 +43,7 @@ public static void sleep(long millis) {
 
 As you can see, the cost of such instrumentation is minimal and only adds 1 hop to the original method.
 
-Now, we add the blocking call detection, the same way as we do it with Java methods:
+Now, we add the blocking call detection, [the same way as we do it with Java methods](#Blocking-Java-method-detection):
 ```java
 public static void sleep(long millis) {
     reactor.blockhound.BlockHoundRuntime.checkBlocking(
@@ -57,10 +56,56 @@ public static void sleep(long millis) {
 ```
 
 ## Blocking call decision
-For performance reasons, part of it is implemented in C++ and executed with JNI:
-1. First, it checks if a current thread is "tagged" already. If not, it creates a tag and calls user-provided predicate
-   (see [customization](customization.md)) to mark it as either blocking or non-blocking.
-2. Then, it iterates the stack trace until it finds a pre-marked method (see [customization](customization.md)), and returns a boolean where:  
-    - `true` means "this method is not supposed to call blocking methods"
-    - `false` means "this method may have a blocking call down the callstack" (think SLF4J logger writing something
-      to the console with a blocking `OutputSteam#write` method).
+We could throw an error (or call the user-provided callback) on every blocking call,
+but sometimes there are blocking calls that must be called (class-loading is a good example).
+
+For this reason, BlockHound supports white- and blacklisting of different methods
+by checking the current state:
+```java
+static void checkBlocking(String className, String methodName, int modifiers) {
+    if (Boolean.FALSE == IS_ALLOWED.get()) {
+        // Report
+    }
+}
+```
+
+Where `IS_ALLOWED` ("is blocking call allowed in this thread or not") is a `ThreadLocal` variable that is defined as:
+```java
+public static final ThreadLocal<Boolean> IS_ALLOWED = ThreadLocal.withInitial(() -> {
+    if (threadPredicate.test(Thread.currentThread())) {
+        return false;
+    }
+    else {
+        // Optimization: use Three-state (true, false, null) where `null` is `not non-blocking`
+        return null;
+    }
+});
+```
+
+it defaults to `false` ("not allowed") if the current thread is non-blocking,
+and to `null` otherwise.
+
+Then, we instrument every "allowed" (or "disallowed") method and set `IS_ALLOWED`:
+```java
+class ClassLoader {
+    // ...
+
+    public Class<?> loadClass(String name) {
+        Boolean previous = BlockHoundRuntime.IS_ALLOWED.get();
+        BlockHoundRuntime.IS_ALLOWED.set(previous != null ? true : null);
+
+        try {
+            // Original call
+            return loadClass(name, false);
+        } finally {
+            BlockHoundRuntime.IS_ALLOWED.set(previous);
+        }
+    }
+}
+```
+
+This way, unless there is a "disallowed" method inside `loadClass(String, boolean)`,
+`checkBlocking` will not report the blocking call.
+
+Note that the check is O(1) and equals to a single `ThreadLocal` read that is supposed
+to be fast enough for this use case.
