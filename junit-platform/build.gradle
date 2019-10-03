@@ -39,6 +39,11 @@ task sourcesJar(type: Jar) {
     from sourceSets.main.allJava
 }
 
+task javadocJar(type: Jar) {
+    from javadoc
+    classifier = 'javadoc'
+}
+
 jar {
   manifest {
     attributes 'Automatic-Module-Name': 'reactor.blockhound.junit'
@@ -50,6 +55,7 @@ publishing {
         mavenJava(MavenPublication) { publication ->
             from components.java
             artifact sourcesJar
+            artifact javadocJar
 
             artifactId 'blockhound-junit-platform'
         }
