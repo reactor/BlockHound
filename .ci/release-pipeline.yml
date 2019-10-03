@@ -14,9 +14,14 @@ jobs:
   steps:
   - script: |
       echo "##vso[task.setvariable variable=version]$(git tag --points-at HEAD)"
-  - template: templates/publish.yml
-    parameters:
-      version: $(version)
+  - bash: ./gradlew --no-daemon -Pversion=$GRADLE_VERSION publish
+    env:
+      GRADLE_VERSION: $(version)
       ${{ if not(endsWith(variables['version'], '.RELEASE')) }}:
-        repoId: libs-milestone-local
-      # TODO support release publishing
+        GRADLE_PUBLISH_REPO_URL: https://repo.spring.io/libs-milestone-local/
+        GRADLE_PUBLISH_MAVEN_USER: $(artifactory.username)
+        GRADLE_PUBLISH_MAVEN_PASSWORD: $(artifactory.password)
+      ${{ if endsWith(variables['version'], '.RELEASE') }}:
+        GRADLE_PUBLISH_REPO_URL: https://api.bintray.com/maven/spring/jars/BlockHound/
+        GRADLE_PUBLISH_MAVEN_USER: $(bintray.user)
+        GRADLE_PUBLISH_MAVEN_PASSWORD: $(bintray.apiKey)
