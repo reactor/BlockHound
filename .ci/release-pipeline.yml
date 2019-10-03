@@ -12,16 +12,13 @@ jobs:
   pool:
     name: 'Hosted Ubuntu 1604'
   steps:
-  - script: |
-      echo "##vso[task.setvariable variable=version]$(git tag --points-at HEAD)"
-  - bash: ./gradlew --no-daemon -Pversion=$GRADLE_VERSION publish
+  - bash: ./gradlew --no-daemon -Pversion=$(git tag --points-at HEAD) publish
     env:
-      GRADLE_VERSION: $(version)
-      ${{ if not(endsWith(variables['version'], '.RELEASE')) }}:
+      ${{ if not(endsWith(variables['Build.SourceBranch'], '.RELEASE')) }}:
         GRADLE_PUBLISH_REPO_URL: https://repo.spring.io/libs-milestone-local/
         GRADLE_PUBLISH_MAVEN_USER: $(artifactory.username)
         GRADLE_PUBLISH_MAVEN_PASSWORD: $(artifactory.password)
-      ${{ if endsWith(variables['version'], '.RELEASE') }}:
+      ${{ if endsWith(variables['Build.SourceBranch'], '.RELEASE') }}:
         GRADLE_PUBLISH_REPO_URL: https://api.bintray.com/maven/spring/jars/BlockHound/
         GRADLE_PUBLISH_MAVEN_USER: $(bintray.user)
         GRADLE_PUBLISH_MAVEN_PASSWORD: $(bintray.apiKey)
