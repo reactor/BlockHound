@@ -59,6 +59,12 @@ Where:
 |`$LATEST_MILESTONE`|[![](https://img.shields.io/badge/dynamic/xml.svg?label=&color=blue&query=%2F%2Fmetadata%2Fversioning%2Flatest&url=https%3A%2F%2Frepo.spring.io%2Fmilestone%2Fio%2Fprojectreactor%2Ftools%2Fblockhound%2Fmaven-metadata.xml)](https://repo.spring.io/milestone/io/projectreactor/tools/blockhound/)|
 |`$LATEST_SNAPSHOT`|[![](https://img.shields.io/badge/dynamic/xml.svg?label=&color=orange&query=%2F%2Fmetadata%2Fversioning%2Flatest&url=https%3A%2F%2Frepo.spring.io%2Fsnapshot%2Fio%2Fprojectreactor%2Ftools%2Fblockhound%2Fmaven-metadata.xml)](https://repo.spring.io/snapshot/io/projectreactor/tools/blockhound/)|
 
+## [Built-in integrations](https://github.com/reactor/BlockHound/blob/master/docs/custom_integrations.md)
+1. [Project Reactor](https://projectreactor.io) 
+<br/>Project Reactor 3.2.x is supported. For Reactor 3.3.x, there is built in support that would use [SPI](https://github.com/reactor/BlockHound/blob/master/docs/custom_integrations.md).
+ 
+2. [RxJava 2](https://github.com/ReactiveX/RxJava/wiki/What's-different-in-2.0)
+
 # Quick Start
 See [the docs](./docs/README.md).
 
