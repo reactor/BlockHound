@@ -63,7 +63,7 @@ Where:
 Although BlockHound supports [the SPI mechanism to integrate with](https://github.com/reactor/BlockHound/blob/master/docs/custom_integrations.md), it comes with a few built-in integrations:
 1. [Project Reactor](https://projectreactor.io)  
   Version 3.2.x is supported out of the box.  
-  Starting with version 3.3.0, there is [a built-in integration in Reactot itself](https://github.com/reactor/reactor-core/blob/v3.3.0.RELEASE/reactor-core/src/main/java/reactor/core/scheduler/ReactorBlockHoundIntegration.java) that uses [the SPI](https://github.com/reactor/BlockHound/blob/master/docs/custom_integrations.md).
+  Starting with `reactor-core` version 3.3.0, there is [a built-in integration in Reactor itself](https://github.com/reactor/reactor-core/blob/v3.3.0.RELEASE/reactor-core/src/main/java/reactor/core/scheduler/ReactorBlockHoundIntegration.java) that uses [the SPI](https://github.com/reactor/BlockHound/blob/master/docs/custom_integrations.md).
 2. [RxJava 2](https://github.com/ReactiveX/RxJava/)
 
 # Quick Start
