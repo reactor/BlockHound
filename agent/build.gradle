@@ -31,7 +31,7 @@ shadowJar {
     exclude 'reactor/shaded/META-INF/**'
 
     // TODO discuss with ByteBuddy folks how to shade it
-    exclude 'win32-x86*.dll'
+    exclude 'win32-x86*/**'
 }
 
 project.tasks.build.dependsOn(shadowJar)
