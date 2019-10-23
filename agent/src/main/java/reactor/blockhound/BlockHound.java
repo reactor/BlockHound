@@ -193,7 +193,27 @@ public class BlockHound {
         }};
 
         private Consumer<BlockingMethod> onBlockingMethod = method -> {
-            throw new Error(String.format("Blocking call! %s", method));
+            Error error = new Error(String.format("Blocking call! %s", method));
+
+            // Strip BlockHound's internal noisy frames from the stacktrace to not mislead the users
+            StackTraceElement[] stackTrace = error.getStackTrace();
+            int length = stackTrace.length;
+            for (int i = 0; i < length; i++) {
+                StackTraceElement stackTraceElement = stackTrace[i];
+                if (!BlockHoundRuntime.class.getName().equals(stackTraceElement.getClassName())) {
+                    continue;
+                }
+
+                if ("checkBlocking".equals(stackTraceElement.getMethodName())) {
+                    if (i + 1 < length) {
+                        System.arraycopy(stackTrace, i + 1, stackTrace, 0, length - i - 1);
+                        error.setStackTrace(stackTrace);
+                    }
+                    break;
+                }
+            }
+
+            throw error;
         };
 
         private Predicate<Thread> threadPredicate = t -> false;
