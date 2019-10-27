@@ -49,7 +49,7 @@ But you can implement your own logic by setting a callback.
 Example:
 ```java
 builder.blockingMethodCallback(it -> {
-    new Error(it.toString()).printStackTrace();
+    new BlockingOperationError(it.toString()).printStackTrace();
 });
 ```
 Here we dump the stacktrace instead of throwing the error, so that we do not alter an execution of the code.
