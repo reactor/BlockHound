@@ -19,15 +19,14 @@ package com.example;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import reactor.blockhound.BlockHound;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+import reactor.core.scheduler.NonBlocking;
 
-import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
-public class StrackTraceTest {
+public class StackTraceTest {
 
     static {
         BlockHound.install();
@@ -35,25 +34,31 @@ public class StrackTraceTest {
 
     @Test
     public void shouldHideInternalFrames() {
-        Throwable e = Assertions.catchThrowable(() -> {
-            Mono
-                    .fromCallable(() -> {
-                        Thread.sleep(0);
-                        return null;
-                    })
-                    .subscribeOn(Schedulers.parallel())
-                    .block(Duration.ofMillis(100));
-        });
+        CompletableFuture<Void> future = new CompletableFuture<>();
+        class TestThread extends Thread implements NonBlocking {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(0);
+                    future.complete(null);
+                }
+                catch (Throwable e) {
+                    future.completeExceptionally(e);
+                }
+            }
+        }
+        new TestThread().start();
 
-        assertThat(e)
+        assertThat(Assertions.catchThrowable(future::join))
                 .as("exception")
                 .isNotNull()
-                .satisfies(it -> {
-                    assertThat(it.getCause().getStackTrace())
+                .satisfies(e -> {
+                    assertThat(e.getCause().getStackTrace())
                             .as("Cause's stacktrace")
                             .extracting(StackTraceElement::getClassName, StackTraceElement::getMethodName)
-                            .startsWith(
-                                    tuple("java.lang.Thread", "sleep")
+                            .containsExactly(
+                                    tuple("java.lang.Thread", "sleep"),
+                                    tuple(TestThread.class.getName(), "run")
                             );
                 });
     }

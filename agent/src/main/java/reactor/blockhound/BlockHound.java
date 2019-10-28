@@ -206,8 +206,7 @@ public class BlockHound {
 
                 if ("checkBlocking".equals(stackTraceElement.getMethodName())) {
                     if (i + 1 < length) {
-                        System.arraycopy(stackTrace, i + 1, stackTrace, 0, length - i - 1);
-                        error.setStackTrace(stackTrace);
+                        error.setStackTrace(Arrays.copyOfRange(stackTrace, i + 1, length));
                     }
                     break;
                 }
