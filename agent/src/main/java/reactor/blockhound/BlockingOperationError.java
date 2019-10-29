@@ -16,13 +16,24 @@
 
 package reactor.blockhound;
 
-public class BlockingOperationError extends Error {
+public final class BlockingOperationError extends Error {
 
     private static final long serialVersionUID = 4980196508457280342L;
 
-    public BlockingOperationError(String message) {
-        super(message);
+    private final BlockingMethod blockingMethod;
+
+    public BlockingOperationError(BlockingMethod blockingMethod) {
+        super();
+        this.blockingMethod = blockingMethod;
     }
 
+    public BlockingMethod getBlockingMethod() {
+        return blockingMethod;
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + ": " + String.format("Blocking call! %s", blockingMethod);
+    }
 }
 
