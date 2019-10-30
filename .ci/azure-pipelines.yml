@@ -37,7 +37,7 @@ jobs:
       targetPath: $(System.DefaultWorkingDirectory)
   - bash: ./gradlew --no-daemon -Pversion=$GRADLE_VERSION publish
     env:
-      GRADLE_VERSION: 1.0.0.BUILD-SNAPSHOT
+      GRADLE_VERSION: 1.0.1.BUILD-SNAPSHOT
       ${{ if not(endsWith(variables['version'], '.RELEASE')) }}:
         GRADLE_PUBLISH_REPO_URL: https://repo.spring.io/libs-snapshot-local/
         GRADLE_PUBLISH_MAVEN_USER: $(artifactory.username)

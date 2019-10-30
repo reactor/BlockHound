@@ -193,7 +193,7 @@ public class BlockHound {
         }};
 
         private Consumer<BlockingMethod> onBlockingMethod = method -> {
-            Error error = new Error(String.format("Blocking call! %s", method));
+            Error error = new BlockingOperationError(method);
 
             // Strip BlockHound's internal noisy frames from the stacktrace to not mislead the users
             StackTraceElement[] stackTrace = error.getStackTrace();

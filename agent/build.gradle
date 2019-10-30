@@ -2,9 +2,14 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '4.0.3'
     id "java"
     id "maven-publish"
+    id "org.unbroken-dome.test-sets" version "2.2.1"
 }
 
 description = "BlockHound Java Agent"
+
+testSets {
+    jarFileTest
+}
 
 sourceCompatibility = targetCompatibility = 8
 
@@ -18,19 +23,31 @@ shadowJar {
         attributes('Automatic-Module-Name': 'reactor.blockhound')
     }
 
-    exclude 'module-info.class'
+    exclude 'META-INF/versions/9/module-info.class'
+    exclude 'META-INF/LICENSE'
+    exclude 'META-INF/NOTICE'
+    exclude 'META-INF/license/'
     exclude 'META-INF/maven/**'
     exclude 'reactor/shaded/META-INF/**'
+
+    // TODO discuss with ByteBuddy folks how to shade it
+    exclude 'win32-x86*/**'
 }
 
 project.tasks.build.dependsOn(shadowJar)
 
 task relocateShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation) {
     target = tasks.shadowJar
-    prefix = "reactor.shaded"
+    prefix = "reactor.blockhound.shaded"
 }
 
 tasks.shadowJar.dependsOn tasks.relocateShadowJar
+
+project.tasks.jarFileTest.configure {
+    systemProperty("jarFile", shadowJar.outputs.files.singleFile)
+    dependsOn(shadowJar)
+}
+tasks.check.dependsOn tasks.jarFileTest
 
 dependencies {
     compileOnly 'com.google.auto.service:auto-service:1.0-rc4'
@@ -40,6 +57,9 @@ dependencies {
 
     compileOnly 'io.projectreactor:reactor-core:3.2.5.RELEASE'
     compileOnly 'io.reactivex.rxjava2:rxjava:2.2.5'
+
+    jarFileTestCompile 'org.assertj:assertj-core:3.12.2'
+    jarFileTestCompile 'junit:junit:4.12'
 }
 
 task sourcesJar(type: Jar) {

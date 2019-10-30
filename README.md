@@ -28,7 +28,7 @@ Mono.delay(Duration.ofSeconds(1))
 
 Will result in:
 ```
-java.lang.Error: Blocking call! java.lang.Thread.sleep
+reactor.blockhound.BlockingOperationError: Blocking call! java.lang.Thread.sleep
 	at java.base/java.lang.Thread.sleep(Native Method)
 	at com.example.Example.lambda$exampleTest$0(Example.java:16)
 ```
@@ -58,6 +58,13 @@ Where:
 |`$LATEST_RELEASE`|[![](https://img.shields.io/badge/dynamic/xml.svg?label=&color=green&query=%2F%2Fmetadata%2Fversioning%2Flatest&url=https%3A%2F%2Frepo1.maven.org%2Fmaven2%2Fio%2Fprojectreactor%2Ftools%2Fblockhound%2Fmaven-metadata.xml)](https://repo1.maven.org/maven2/io/projectreactor/tools/blockhound/)|
 |`$LATEST_MILESTONE`|[![](https://img.shields.io/badge/dynamic/xml.svg?label=&color=blue&query=%2F%2Fmetadata%2Fversioning%2Flatest&url=https%3A%2F%2Frepo.spring.io%2Fmilestone%2Fio%2Fprojectreactor%2Ftools%2Fblockhound%2Fmaven-metadata.xml)](https://repo.spring.io/milestone/io/projectreactor/tools/blockhound/)|
 |`$LATEST_SNAPSHOT`|[![](https://img.shields.io/badge/dynamic/xml.svg?label=&color=orange&query=%2F%2Fmetadata%2Fversioning%2Flatest&url=https%3A%2F%2Frepo.spring.io%2Fsnapshot%2Fio%2Fprojectreactor%2Ftools%2Fblockhound%2Fmaven-metadata.xml)](https://repo.spring.io/snapshot/io/projectreactor/tools/blockhound/)|
+
+## Built-in integrations
+Although BlockHound supports [the SPI mechanism to integrate with](https://github.com/reactor/BlockHound/blob/master/docs/custom_integrations.md), it comes with a few built-in integrations:
+1. [Project Reactor](https://projectreactor.io)  
+  Version 3.2.x is supported out of the box.  
+  Starting with `reactor-core` version 3.3.0, there is [a built-in integration in Reactor itself](https://github.com/reactor/reactor-core/blob/v3.3.0.RELEASE/reactor-core/src/main/java/reactor/core/scheduler/ReactorBlockHoundIntegration.java) that uses [the SPI](https://github.com/reactor/BlockHound/blob/master/docs/custom_integrations.md).
+2. [RxJava 2](https://github.com/ReactiveX/RxJava/)
 
 # Quick Start
 See [the docs](./docs/README.md).

@@ -21,6 +21,7 @@ import io.reactivex.Single;
 import io.reactivex.exceptions.CompositeException;
 import org.junit.Test;
 import reactor.blockhound.BlockHound;
+import reactor.blockhound.BlockingOperationError;
 import reactor.core.publisher.Flux;
 
 import java.util.concurrent.TimeUnit;
@@ -31,14 +32,14 @@ public class RxJavaTest {
         BlockHound.install();
     }
 
-    @Test(expected = Error.class)
+    @Test(expected = BlockingOperationError.class)
     public void testBlockingCallInsideRxJavaSingle() {
         Single.timer(10, TimeUnit.MILLISECONDS)
                 .doOnSuccess(it -> Thread.sleep(10))
                 .blockingGet();
     }
 
-    @Test(expected = Error.class)
+    @Test(expected = BlockingOperationError.class)
     public void testBlockingCallInsideRxJavaFlowable() throws Throwable {
         try {
             Flowable.timer(10, TimeUnit.MILLISECONDS)
@@ -49,7 +50,7 @@ public class RxJavaTest {
         }
     }
 
-    @Test(expected = Error.class)
+    @Test(expected = BlockingOperationError.class)
     public void testBlockingCallInsideRxJavaInterop() throws Throwable {
         try {
             Flux.from(Flowable.timer(10, TimeUnit.MILLISECONDS))
