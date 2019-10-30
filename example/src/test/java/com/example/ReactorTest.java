@@ -247,8 +247,8 @@ public class ReactorTest {
 
         assertThat(e).isInstanceOfSatisfying(BlockingOperationError.class, it -> {
             assertThat(it.getMethod())
-                .isNotNull()
-                .returns(method, BlockingMethod::toString);
+                    .isNotNull()
+                    .returns(method, BlockingMethod::toString);
         });
     }
 
