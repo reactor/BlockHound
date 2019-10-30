@@ -26,6 +26,8 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 import reactor.blockhound.BlockHound;
+import reactor.blockhound.BlockingMethod;
+import reactor.blockhound.BlockingOperationError;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -213,7 +215,7 @@ public class ReactorTest {
             }).onErrorReturn(SocketTimeoutException.class, "");
         });
 
-        // tests.entrySet().removeIf(it -> !"java.lang.Thread.sleep".equals(it.getKey()));
+        tests.entrySet().removeIf(it -> !"java.lang.Thread.sleep".equals(it.getKey()));
 
         return tests.entrySet().stream().map(it -> new Object[]{it.getKey(), it.getValue()}).collect(Collectors.toList());
     }
@@ -238,11 +240,16 @@ public class ReactorTest {
         var e = Assertions.catchThrowable(() -> {
             mono.subscribeOn(Schedulers.parallel()).block(Duration.ofSeconds(1));
         });
-        assertThat(e).isNotNull();
+        assertThat(e).hasCauseInstanceOf(BlockingOperationError.class);
 
+        e = e.getCause();
         e.printStackTrace(System.out);
 
-        assertThat(e).hasMessageEndingWith("Blocking call! " + method);
+        assertThat(e).isInstanceOfSatisfying(BlockingOperationError.class, it -> {
+            assertThat(it.getMethod())
+                .isNotNull()
+                .returns(method, BlockingMethod::toString);
+        });
     }
 
     @Test
@@ -251,11 +258,16 @@ public class ReactorTest {
         var e = Assertions.catchThrowable(() -> {
             mono.subscribeOn(Schedulers.parallel()).blockLast(Duration.ofSeconds(1));
         });
-        assertThat(e).isNotNull();
+        assertThat(e).hasCauseInstanceOf(BlockingOperationError.class);
 
+        e = e.getCause();
         e.printStackTrace(System.out);
 
-        assertThat(e).hasMessageEndingWith("Blocking call! " + method);
+        assertThat(e).isInstanceOfSatisfying(BlockingOperationError.class, it -> {
+            assertThat(it.getMethod())
+                    .isNotNull()
+                    .returns(method, BlockingMethod::toString);
+        });
     }
 
 }
