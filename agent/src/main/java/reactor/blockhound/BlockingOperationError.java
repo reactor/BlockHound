@@ -23,17 +23,12 @@ public final class BlockingOperationError extends Error {
     private final BlockingMethod method;
 
     public BlockingOperationError(BlockingMethod method) {
-        super();
+        super(String.format("Blocking call! %s", method));
         this.method = method;
     }
 
     public BlockingMethod getMethod() {
         return method;
-    }
-
-    @Override
-    public String toString() {
-        return super.toString() + ": " + String.format("Blocking call! %s", method);
     }
 }
 

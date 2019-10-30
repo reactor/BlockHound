@@ -19,6 +19,8 @@ package com.example;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import reactor.blockhound.BlockHound;
+import reactor.blockhound.BlockingMethod;
+import reactor.blockhound.BlockingOperationError;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -41,11 +43,16 @@ public class CustomBlockingMethodTest {
         Throwable e = Assertions.catchThrowable(() -> {
             Mono.fromRunnable(Blocking::block).hide().subscribeOn(Schedulers.parallel()).block(Duration.ofMillis(100));
         });
-
         assertThat(e)
                 .as("exception")
-                .isNotNull()
-                .hasMessageEndingWith("Blocking call! " + Blocking.class.getName() + ".block");
+                .hasCauseInstanceOf(BlockingOperationError.class);
+
+        assertThat(e.getCause()).isInstanceOfSatisfying(BlockingOperationError.class, cause -> {
+            assertThat(cause.getMethod())
+                    .isNotNull()
+                    .returns(Blocking.class.getName(), BlockingMethod::getClassName)
+                    .returns("block", BlockingMethod::getName);
+        });
     }
 
     static class Blocking {
