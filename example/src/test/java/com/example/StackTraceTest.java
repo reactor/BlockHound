@@ -19,6 +19,7 @@ package com.example;
 import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import reactor.blockhound.BlockHound;
+import reactor.blockhound.BlockingOperationError;
 import reactor.core.scheduler.NonBlocking;
 
 import java.util.concurrent.CompletableFuture;
@@ -52,6 +53,7 @@ public class StackTraceTest {
         assertThat(Assertions.catchThrowable(future::join))
                 .as("exception")
                 .isNotNull()
+                .hasCauseInstanceOf(BlockingOperationError.class)
                 .satisfies(e -> {
                     assertThat(e.getCause().getStackTrace())
                             .as("Cause's stacktrace")
