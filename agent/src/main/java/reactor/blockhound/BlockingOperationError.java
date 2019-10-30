@@ -20,20 +20,20 @@ public final class BlockingOperationError extends Error {
 
     private static final long serialVersionUID = 4980196508457280342L;
 
-    private final BlockingMethod blockingMethod;
+    private final BlockingMethod method;
 
-    public BlockingOperationError(BlockingMethod blockingMethod) {
+    public BlockingOperationError(BlockingMethod method) {
         super();
-        this.blockingMethod = blockingMethod;
+        this.method = method;
     }
 
-    public BlockingMethod getBlockingMethod() {
-        return blockingMethod;
+    public BlockingMethod getMethod() {
+        return method;
     }
 
     @Override
     public String toString() {
-        return super.toString() + ": " + String.format("Blocking call! %s", blockingMethod);
+        return super.toString() + ": " + String.format("Blocking call! %s", method);
     }
 }
 
