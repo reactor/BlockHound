@@ -28,7 +28,7 @@ Mono.delay(Duration.ofSeconds(1))
 
 Will result in:
 ```
-java.lang.Error: Blocking call! java.lang.Thread.sleep
+reactor.blockhound.BlockingOperationError: Blocking call! java.lang.Thread.sleep
 	at java.base/java.lang.Thread.sleep(Native Method)
 	at com.example.Example.lambda$exampleTest$0(Example.java:16)
 ```
