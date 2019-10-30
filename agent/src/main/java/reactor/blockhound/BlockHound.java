@@ -193,7 +193,7 @@ public class BlockHound {
         }};
 
         private Consumer<BlockingMethod> onBlockingMethod = method -> {
-            throw new Error(String.format("Blocking call! %s", method));
+            throw new BlockingOperationError(method);
         };
 
         private Predicate<Thread> threadPredicate = t -> false;
