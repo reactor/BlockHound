@@ -16,7 +16,7 @@ test {
     // This is not required in normal testing scenarios
     forkEvery = 1
     maxParallelForks = 1
-    jvmArgs = [
+    jvmArgs += [
             "-Xverify:all",
             JavaVersion.current().isJava9Compatible()
                     ? "-Xlog:redefine+class*=warning"
