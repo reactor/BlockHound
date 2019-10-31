@@ -7,6 +7,15 @@ subprojects {
         jcenter()
     }
 
+    tasks.withType(Test).all {
+        def javaMajorVersion = System.getProperty("java.version").split("\\.", 2)[0].toInteger()
+        if (javaMajorVersion >= 13) {
+            jvmArgs += [
+                    "-XX:+AllowRedefinitionToAddDeleteMethods"
+            ]
+        }
+    }
+
     plugins.withType(MavenPublishPlugin) {
         project.publishing {
             repositories {

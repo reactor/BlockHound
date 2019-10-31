@@ -11,6 +11,6 @@ jobs:
     - name: Set up JDK
       uses: actions/setup-java@v1
       with:
-        java-version: 11
+        java-version: 13
     - name: Build with Gradle
       run: ./gradlew check javadoc
