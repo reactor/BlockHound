@@ -24,30 +24,72 @@ import java.util.function.Predicate;
 // initialized.
 class BlockHoundRuntime {
 
-    @SuppressWarnings("unused")
-    static volatile Consumer<Object[]> blockingMethodConsumer;
+    public static final class State {
 
-    @SuppressWarnings("unused")
-    static volatile Predicate<Thread> threadPredicate;
+        final boolean dynamic;
 
-    static final ThreadLocal<Boolean> IS_ALLOWED = ThreadLocal.withInitial(() -> {
-        if (threadPredicate.test(Thread.currentThread())) {
-            return false;
+        boolean allowed = false;
+
+        public State(boolean dynamic) {
+            this(dynamic, false);
         }
-        else {
-            // Optimization: use Three-state (true, false, null) where `null` is `not non-blocking`
-            return null;
+
+        State(boolean dynamic, boolean allowed) {
+            this.dynamic = dynamic;
+            this.allowed = allowed;
         }
+
+        public boolean isDynamic() {
+            return dynamic;
+        }
+
+        public boolean isAllowed() {
+            return allowed;
+        }
+
+        public void setAllowed(boolean allowed) {
+            this.allowed = allowed;
+        }
+    }
+
+    public static volatile Consumer<Object[]> blockingMethodConsumer;
+
+    public static volatile Predicate<Thread> threadPredicate;
+
+    public static volatile Predicate<Thread> dynamicThreadPredicate;
+
+    public static final ThreadLocal<State> STATE = ThreadLocal.withInitial(() -> {
+        boolean isDynamic = dynamicThreadPredicate.test(Thread.currentThread());
+        if (isDynamic) {
+            return new State(true);
+        }
+
+        boolean isNonBlocking = threadPredicate.test(Thread.currentThread());
+        if (isNonBlocking) {
+            return new State(false);
+        }
+
+        // Optimization: return `null` if not dynamic and `not non-blocking`
+        return null;
     });
 
     @SuppressWarnings("unused")
-    static void checkBlocking(String internalClassName, String methodName, int modifiers) {
-        if (Boolean.FALSE == IS_ALLOWED.get()) {
-            blockingMethodConsumer.accept(new Object[] {
-                    internalClassName.replace("/", "."),
-                    methodName,
-                    modifiers
-            });
+    public static void checkBlocking(String internalClassName, String methodName, int modifiers) {
+        State state = STATE.get();
+        if (state == null || state.isAllowed()) {
+            return;
         }
+
+        if (state.isDynamic()) {
+            boolean isNonBlocking = threadPredicate.test(Thread.currentThread());
+            if (!isNonBlocking) {
+                return;
+            }
+        }
+        blockingMethodConsumer.accept(new Object[] {
+                internalClassName.replace("/", "."),
+                methodName,
+                modifiers
+        });
     }
 }

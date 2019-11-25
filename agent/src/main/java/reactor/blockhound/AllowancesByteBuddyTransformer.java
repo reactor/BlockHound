@@ -104,24 +104,31 @@ class AllowancesByteBuddyTransformer implements AgentBuilder.Transformer {
     static class AllowAdvice {
 
         @Advice.OnMethodEnter
-        static boolean onEnter(
+        static BlockHoundRuntime.State onEnter(
                 @AllowancesByteBuddyTransformer.AllowedArgument boolean allowed
         ) {
-            Boolean previous = BlockHoundRuntime.IS_ALLOWED.get();
-            if (previous == null || previous == allowed) {
-                return allowed;
+            BlockHoundRuntime.State previous = BlockHoundRuntime.STATE.get();
+            if (previous == null) {
+                return null;
             }
-            BlockHoundRuntime.IS_ALLOWED.set(allowed);
+
+            if (previous.isAllowed() == allowed) {
+                // if we won't change the flag, return `null` and skip the `onExit` part
+                return null;
+            }
+
+            // Otherwise, set to `allowed` and reset to `!allowed` in `onExit`
+            previous.setAllowed(allowed);
             return previous;
         }
 
         @Advice.OnMethodExit(onThrowable = Throwable.class)
         static void onExit(
-                @Advice.Enter boolean wasAllowed,
+                @Advice.Enter BlockHoundRuntime.State previousState,
                 @AllowancesByteBuddyTransformer.AllowedArgument boolean allowed
         ) {
-            if (wasAllowed != allowed) {
-                BlockHoundRuntime.IS_ALLOWED.set(wasAllowed);
+            if (previousState != null) {
+                previousState.setAllowed(!allowed);
             }
         }
     }

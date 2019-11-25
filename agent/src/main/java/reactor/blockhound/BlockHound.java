@@ -217,6 +217,8 @@ public class BlockHound {
 
         private Predicate<Thread> threadPredicate = t -> false;
 
+        private Predicate<Thread> dynamicThreadPredicate = t -> false;
+
         /**
          * Marks provided method of the provided class as "blocking".
          *
@@ -304,6 +306,22 @@ public class BlockHound {
         }
 
         /**
+         * Replaces the current dynamic thread predicate with the result of applying the provided function.
+         *
+         * Warning! Consider always using {@link Predicate#or(Predicate)} and not override the previous one:
+         * <code>
+         * dynamicThreadPredicate(current -&gt; current.or(MyMarker.class::isInstance))
+         * </code>
+         *
+         * @param function a function to immediately apply on the current instance of the predicate
+         * @return this
+         */
+        public Builder dynamicThreadPredicate(Function<Predicate<Thread>, Predicate<Thread>> function) {
+            this.dynamicThreadPredicate = function.apply(this.dynamicThreadPredicate);
+            return this;
+        }
+
+        /**
          * Applies the provided {@link BlockHoundIntegration} to the current builder
          * @param integration an integration to apply
          * @return this
@@ -326,7 +344,11 @@ public class BlockHound {
                 }
 
                 Instrumentation instrumentation = ByteBuddyAgent.install();
-                InstrumentationUtils.injectBootstrapClasses(instrumentation, BLOCK_HOUND_RUNTIME_TYPE.getInternalName());
+                InstrumentationUtils.injectBootstrapClasses(
+                        instrumentation,
+                        BLOCK_HOUND_RUNTIME_TYPE.getInternalName(),
+                        "reactor/blockhound/BlockHoundRuntime$State"
+                );
 
                 // Since BlockHoundRuntime is injected into the bootstrap classloader,
                 // we use raw Object[] here instead of `BlockingMethod` to avoid classloading issues
@@ -336,6 +358,10 @@ public class BlockHound {
                     int modifiers = (Integer) args[2];
                     onBlockingMethod.accept(new BlockingMethod(className, methodName, modifiers));
                 };
+
+                // Eagerly trigger the classloading of `dynamicThreadPredicate` (since classloading is blocking)
+                dynamicThreadPredicate.test(Thread.currentThread());
+                BlockHoundRuntime.dynamicThreadPredicate = dynamicThreadPredicate;
 
                 // Eagerly trigger the classloading of `threadPredicate` (since classloading is blocking)
                 threadPredicate.test(Thread.currentThread());
