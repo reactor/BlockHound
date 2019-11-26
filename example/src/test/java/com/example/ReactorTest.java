@@ -56,6 +56,8 @@ public class ReactorTest {
 
     @Parameters(name = "{index}: {0}")
     public static Iterable<Object[]> data() {
+        Runtime.Version version = Runtime.version();
+
         Map<String, Callable<Mono<?>>> tests = new HashMap<String, Callable<Mono<?>>>();
 
         tests.put("java.net.Socket#connect", () -> {
@@ -68,6 +70,16 @@ public class ReactorTest {
         });
 
         tests.put("java.net.SocketInputStream#socketRead0", () -> {
+            Assumptions.assumeThat(Runtime.version().feature()).isLessThan(13);
+            var socket = new Socket("www.google.com", 80);
+            socket.getOutputStream().write("GET / HTTP/1.0\r\n\r\n".getBytes());
+            return Mono.fromCallable(() -> {
+                return socket.getInputStream().read(new byte[1]);
+            });
+        });
+
+        tests.put("java.net.Socket$SocketInputStream#read", () -> {
+            Assumptions.assumeThat(Runtime.version().feature()).isGreaterThanOrEqualTo(13);
             var socket = new Socket("www.google.com", 80);
             socket.getOutputStream().write("GET / HTTP/1.0\r\n\r\n".getBytes());
             return Mono.fromCallable(() -> {
@@ -76,6 +88,16 @@ public class ReactorTest {
         });
 
         tests.put("java.net.SocketOutputStream#socketWrite0", () -> {
+            Assumptions.assumeThat(version.feature()).isLessThan(13);
+            var socket = new Socket("www.google.com", 80);
+            return Mono.fromCallable(() -> {
+                socket.getOutputStream().write(1);
+                return null;
+            });
+        });
+
+        tests.put("java.net.Socket$SocketOutputStream#write", () -> {
+            Assumptions.assumeThat(version.feature()).isGreaterThanOrEqualTo(13);
             var socket = new Socket("www.google.com", 80);
             return Mono.fromCallable(() -> {
                 socket.getOutputStream().write(1);
@@ -183,7 +205,7 @@ public class ReactorTest {
             });
         });
 
-        tests.put("java.net.PlainDatagramSocketImpl#send", () -> {
+        tests.put("java.net.PlainDatagramSocketImpl#" + (version.feature() >= 13 ? "send0" : "send"), () -> {
             // TODO find which implementation is used on Windows
             Assumptions.assumeThat(System.getProperty("os.name").toLowerCase()).doesNotContain("win");
             var socket = new DatagramSocket();
@@ -206,7 +228,7 @@ public class ReactorTest {
             }).onErrorReturn(SocketTimeoutException.class, "");
         });
 
-        tests.put("java.net.PlainSocketImpl#socketAccept", () -> {
+        tests.put("java.net.ServerSocket#implAccept", () -> {
             var socket = new ServerSocket(0);
             socket.setSoTimeout(100);
             return Mono.fromCallable(() -> {
