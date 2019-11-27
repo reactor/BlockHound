@@ -130,18 +130,31 @@ public class BlockHound {
                 put("connect0", singleton("(Ljava/net/InetAddress;I)V"));
                 put("peekData", singleton("(Ljava/net/DatagramPacket;)I"));
                 put("send", singleton("(Ljava/net/DatagramPacket;)V"));
+                put("send0", singleton("(Ljava/net/DatagramPacket;)V"));
             }});
 
             put("java/net/PlainSocketImpl", new HashMap<String, Set<String>>() {{
                 put("socketAccept", singleton("(Ljava/net/SocketImpl;)V"));
             }});
 
+            put("java/net/ServerSocket", new HashMap<String, Set<String>>() {{
+                put("implAccept", singleton("(Ljava/net/Socket;)V"));
+            }});
+
             put("java/net/SocketInputStream", new HashMap<String, Set<String>>() {{
                 put("socketRead0", singleton("(Ljava/io/FileDescriptor;[BIII)I"));
             }});
 
+            put("java/net/Socket$SocketInputStream", new HashMap<String, Set<String>>() {{
+                put("read", singleton("([BII)I"));
+            }});
+
             put("java/net/SocketOutputStream", new HashMap<String, Set<String>>() {{
                 put("socketWrite0", singleton("(Ljava/io/FileDescriptor;[BII)V"));
+            }});
+
+            put("java/net/Socket$SocketOutputStream", new HashMap<String, Set<String>>() {{
+                put("write", singleton("([BII)V"));
             }});
 
             put("java/io/FileInputStream", new HashMap<String, Set<String>>() {{
