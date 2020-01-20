@@ -60,7 +60,7 @@ class AllowancesByteBuddyTransformer implements AgentBuilder.Transformer {
                 .withCustomMapping()
                 .bind(new AllowedArgument.Factory(methods))
                 .to(AllowAdvice.class)
-                .on(method -> methods.containsKey(method.getName()));
+                .on(method -> methods.containsKey(method.getInternalName()));
 
         return builder.visit(advice);
     }
@@ -94,7 +94,7 @@ class AllowancesByteBuddyTransformer implements AgentBuilder.Transformer {
                     AdviceType adviceType
             ) {
                 return (instrumentedType, instrumentedMethod, assigner, argumentHandler, sort) -> {
-                    boolean allowed = methods.get(instrumentedMethod.getName());
+                    boolean allowed = methods.get(instrumentedMethod.getInternalName());
                     return Advice.OffsetMapping.Target.ForStackManipulation.of(allowed);
                 };
             }
