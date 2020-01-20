@@ -61,7 +61,7 @@ class BlockingCallsByteBuddyTransformer implements AgentBuilder.Transformer {
                 .bind(ModifiersArgument.Factory.INSTANCE)
                 .to(BlockingCallAdvice.class)
                 .on(method -> {
-                    Set<String> descriptors = methods.get(method.getName());
+                    Set<String> descriptors = methods.get(method.getInternalName());
                     return descriptors != null && descriptors.contains(method.getDescriptor());
                 });
 
