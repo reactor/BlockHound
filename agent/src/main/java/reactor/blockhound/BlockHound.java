@@ -335,6 +335,16 @@ public class BlockHound {
         }
 
         /**
+         * Appends the provided predicate to the current one.
+         *
+         * @param predicate a predicate to append to the current instance of the predicate
+         * @return this
+         */
+        public Builder addDynamicThreadPredicate(Predicate<Thread> predicate) {
+            return dynamicThreadPredicate(p -> p.or(predicate));
+        }
+
+        /**
          * Applies the provided {@link BlockHoundIntegration} to the current builder
          * @param integration an integration to apply
          * @return this

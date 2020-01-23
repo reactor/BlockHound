@@ -29,7 +29,7 @@ public class DynamicThreadsTest {
 
     static {
         BlockHound.install(b -> {
-            b.dynamicThreadPredicate(p -> p.or(DynamicThread.class::isInstance));
+            b.addDynamicThreadPredicate(DynamicThread.class::isInstance);
 
             b.nonBlockingThreadPredicate(p -> p.or(thread -> {
                 return thread instanceof DynamicThread && ((DynamicThread) thread).isNonBlocking;
