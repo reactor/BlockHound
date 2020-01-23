@@ -19,8 +19,6 @@ package reactor.blockhound;
 import net.bytebuddy.jar.asm.ClassReader;
 import net.bytebuddy.jar.asm.ClassVisitor;
 import net.bytebuddy.jar.asm.ClassWriter;
-import net.bytebuddy.jar.asm.FieldVisitor;
-import net.bytebuddy.jar.asm.MethodVisitor;
 import net.bytebuddy.jar.asm.Opcodes;
 
 import java.io.File;
@@ -72,29 +70,6 @@ class InstrumentationUtils {
         @Override
         public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
             super.visit(version, access | Opcodes.ACC_PUBLIC, name, signature, superName, interfaces);
-        }
-
-        @Override
-        public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
-            switch (name) {
-                case "blockingMethodConsumer":
-                case "threadPredicate":
-                case "IS_ALLOWED":
-                    access = access | Opcodes.ACC_PUBLIC;
-                    break;
-            }
-            return super.visitField(access, name, descriptor, signature, value);
-        }
-
-        @Override
-        public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-            switch (name) {
-                case "checkBlocking":
-                    access = access | Opcodes.ACC_PUBLIC;
-                    break;
-            }
-
-            return super.visitMethod(access, name, descriptor, signature, exceptions);
         }
     }
 }
