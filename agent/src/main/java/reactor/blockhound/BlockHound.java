@@ -85,13 +85,9 @@ public class BlockHound {
      * @see BlockHound#builder()
      */
     public static void install(BlockHoundIntegration... integrations) {
-        Builder builder = builder();
-        ServiceLoader<BlockHoundIntegration> serviceLoader = ServiceLoader.load(BlockHoundIntegration.class);
-        Stream
-                .concat(StreamSupport.stream(serviceLoader.spliterator(), false), Stream.of(integrations))
-                .sorted()
-                .forEach(builder::with);
-        builder.install();
+        builder()
+                .loadIntegrationsAndProvided(integrations)
+                .install();
     }
 
     private BlockHound() {
@@ -351,6 +347,30 @@ public class BlockHound {
          */
         public Builder with(BlockHoundIntegration integration) {
             integration.applyTo(this);
+            return this;
+        }
+
+        /**
+         * Loads integrations from classpath with {@link ServiceLoader}
+         * @return this
+         */
+        public Builder loadIntegrations() {
+            return loadIntegrationsAndProvided();
+        }
+
+        /**
+         * Loads integrations from classpath with {@link ServiceLoader} together with the provided integrations
+         * in sorted order
+         *
+         * @param providedIntegrations an array of integrations to automatically apply together with the integrations from the classpath
+         * @return this
+         */
+        Builder loadIntegrationsAndProvided(BlockHoundIntegration... providedIntegrations) {
+            ServiceLoader<BlockHoundIntegration> serviceLoader = ServiceLoader.load(BlockHoundIntegration.class);
+            Stream
+                    .concat(StreamSupport.stream(serviceLoader.spliterator(), false), Stream.of(providedIntegrations))
+                    .sorted()
+                    .forEach(this::with);
             return this;
         }
 
