@@ -32,8 +32,10 @@ Even worse if there is `try {} catch {}` that ignores (swallows) the error.
 
 If you see such behaviour, **consider [overriding the callback](customization.md) and printing instead of throwing:**
 ```java
-builder.blockingMethodCallback(it -> {
-    new Exception(it.toString()).printStackTrace();
+BlockHound.install(builder -> {
+    builder.blockingMethodCallback(it -> {
+        new Exception(it.toString().printStackTrace();
+    });
 });
 ```
 
