@@ -38,6 +38,8 @@ Note that it points to the exact place where the blocking call got triggered. In
 
 Download it from Maven Central repositories (stable releases only) or repo.spring.io:
 
+_Gradle_
+
 ```groovy
 repositories {
   mavenCentral()
@@ -51,6 +53,19 @@ dependencies {
   // testCompile 'io.projectreactor.tools:blockhound:$LATEST_SNAPSHOT'
 }
 ```
+
+_Maven_
+
+```xml
+<dependencies>
+  <dependency>
+    <groupId>io.projectreactor.tools</groupId>
+    <artifactId>blockhound</artifactId>
+    <version>$LATEST_RELEASE</version>
+  </dependency>
+</dependencies>
+```
+
 Where:
 
 |||
