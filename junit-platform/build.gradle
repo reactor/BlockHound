@@ -25,7 +25,7 @@ dependencies {
     compileOnly 'org.junit.platform:junit-platform-launcher:1.0.0'
 
     testCompile 'org.assertj:assertj-core:3.11.1'
-    testCompile 'io.projectreactor:reactor-core:3.2.2.RELEASE'
+    testCompile 'io.projectreactor:reactor-core:3.3.3.RELEASE'
 
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.4.0'
     testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.4.0'

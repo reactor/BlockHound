@@ -55,7 +55,7 @@ dependencies {
     compile 'net.bytebuddy:byte-buddy:1.10.1'
     compile 'net.bytebuddy:byte-buddy-agent:1.10.1'
 
-    compileOnly 'io.projectreactor:reactor-core:3.2.5.RELEASE'
+    compileOnly 'io.projectreactor:reactor-core:3.3.3.RELEASE'
     compileOnly 'io.reactivex.rxjava2:rxjava:2.2.5'
 
     jarFileTestCompile 'org.assertj:assertj-core:3.12.2'
