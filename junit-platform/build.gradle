@@ -22,7 +22,7 @@ dependencies {
     compileOnly 'com.google.auto.service:auto-service:1.0-rc4'
     compile project(path: ":agent", configuration: 'shadow')
 
-    compileOnly 'org.junit.platform:junit-platform-launcher:1.0.0'
+    compileOnly 'org.junit.platform:junit-platform-launcher:1.6.0'
 
     testCompile 'org.assertj:assertj-core:3.11.1'
     testCompile 'io.projectreactor:reactor-core:3.2.2.RELEASE'
