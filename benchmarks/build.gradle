@@ -28,5 +28,5 @@ dependencies {
             jmh project(path: ":agent", configuration: 'shadow')
     }
 
-    jmh "org.openjdk.jmh:jmh-generator-annprocess:1.21"
+    jmh "org.openjdk.jmh:jmh-generator-annprocess:1.23"
 }
