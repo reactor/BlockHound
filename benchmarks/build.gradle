@@ -10,7 +10,7 @@ repositories {
 }
 
 jmh {
-    jmhVersion = '1.21'
+    jmhVersion = '1.23'
     duplicateClassesStrategy DuplicatesStrategy.INCLUDE
     failOnError = true
 
@@ -28,5 +28,5 @@ dependencies {
             jmh project(path: ":agent", configuration: 'shadow')
     }
 
-    jmh "org.openjdk.jmh:jmh-generator-annprocess:1.23"
+    jmh "org.openjdk.jmh:jmh-generator-annprocess:${jmh.jmhVersion}"
 }
