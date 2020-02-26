@@ -43,7 +43,7 @@ check.dependsOn(testReactor3_3_x)
 dependencies {
     testCompile project(path: ":agent", configuration: 'shadow')
     testCompile 'io.projectreactor:reactor-core:3.2.2.RELEASE'
-    testCompile 'io.reactivex.rxjava2:rxjava:2.2.5'
+    testCompile 'io.reactivex.rxjava2:rxjava:2.2.18'
 
     testCompile 'junit:junit:4.13'
     testCompile 'org.assertj:assertj-core:3.14.0'
