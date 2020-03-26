@@ -426,7 +426,7 @@ public class BlockHound {
                 message += "You need to add '-XX:+AllowRedefinitionToAddDeleteMethods' JVM flag.\n";
                 message += "See https://github.com/reactor/BlockHound/issues/33 for more info.";
             }
-            catch (ClassNotFoundException | NoClassDefFoundError ignored) {
+            catch (Throwable ignored) {
             }
 
             throw new IllegalStateException(message);
