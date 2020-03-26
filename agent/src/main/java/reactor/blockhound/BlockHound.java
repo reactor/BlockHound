@@ -425,7 +425,8 @@ public class BlockHound {
                 message += "It looks like you're running on JDK 13+.\n";
                 message += "You need to add '-XX:+AllowRedefinitionToAddDeleteMethods' JVM flag.\n";
                 message += "See https://github.com/reactor/BlockHound/issues/33 for more info.";
-            } catch (ClassNotFoundException ignored) {
+            }
+            catch (ClassNotFoundException | NoClassDefFoundError ignored) {
             }
 
             throw new IllegalStateException(message);
