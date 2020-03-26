@@ -361,11 +361,12 @@ public class BlockHound {
          * Installs the agent and runs the instrumentation, but only if BlockHound wasn't installed yet (it is global).
          */
         public void install() {
-            try {
-                if (!INITIALIZED.compareAndSet(false, true)) {
-                    return;
-                }
+            if (!INITIALIZED.compareAndSet(false, true)) {
+                return;
+            }
 
+            Consumer<BlockingMethod> originalOnBlockingMethod = onBlockingMethod;
+            try {
                 Instrumentation instrumentation = ByteBuddyAgent.install();
                 InstrumentationUtils.injectBootstrapClasses(
                         instrumentation,
@@ -382,19 +383,56 @@ public class BlockHound {
                     onBlockingMethod.accept(new BlockingMethod(className, methodName, modifiers));
                 };
 
-                // Eagerly trigger the classloading of `dynamicThreadPredicate` (since classloading is blocking)
-                dynamicThreadPredicate.test(Thread.currentThread());
-                BlockHoundRuntime.dynamicThreadPredicate = dynamicThreadPredicate;
-
-                // Eagerly trigger the classloading of `threadPredicate` (since classloading is blocking)
-                threadPredicate.test(Thread.currentThread());
-                BlockHoundRuntime.threadPredicate = threadPredicate;
+                onBlockingMethod = m -> {
+                    Thread currentThread = Thread.currentThread();
+                    if (currentThread instanceof TestThread) {
+                        ((TestThread) currentThread).blockingCallDetected = true;
+                    }
+                };
+                BlockHoundRuntime.dynamicThreadPredicate = t -> false;
+                BlockHoundRuntime.threadPredicate = TestThread.class::isInstance;
 
                 instrument(instrumentation);
             }
             catch (Throwable e) {
                 throw new RuntimeException(e);
             }
+
+            testInstrumentation();
+
+            // Eagerly trigger the classloading of `dynamicThreadPredicate` (since classloading is blocking)
+            dynamicThreadPredicate.test(Thread.currentThread());
+            BlockHoundRuntime.dynamicThreadPredicate = dynamicThreadPredicate;
+
+            // Eagerly trigger the classloading of `threadPredicate` (since classloading is blocking)
+            threadPredicate.test(Thread.currentThread());
+            BlockHoundRuntime.threadPredicate = threadPredicate;
+
+            onBlockingMethod = originalOnBlockingMethod;
+        }
+
+        private void testInstrumentation() {
+            TestThread thread = new TestThread();
+            thread.startAndWait();
+
+            // Set in the artificial blockingMethodConsumer, see install()
+            if (thread.blockingCallDetected) {
+                return;
+            }
+
+            String message = "The instrumentation have failed.";
+            try {
+                // Test some public API class added in Java 13
+                Class.forName("sun.nio.ch.NioSocketImpl");
+                message += "\n";
+                message += "It looks like you're running on JDK 13+.\n";
+                message += "You need to add '-XX:+AllowRedefinitionToAddDeleteMethods' JVM flag.\n";
+                message += "See https://github.com/reactor/BlockHound/issues/33 for more info.";
+            }
+            catch (ClassNotFoundException ignored) {
+            }
+
+            throw new IllegalStateException(message);
         }
 
         private void instrument(Instrumentation instrumentation) {
