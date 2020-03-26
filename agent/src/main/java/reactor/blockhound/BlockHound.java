@@ -361,6 +361,12 @@ public class BlockHound {
          * Installs the agent and runs the instrumentation, but only if BlockHound wasn't installed yet (it is global).
          */
         public void install() {
+            Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+                @Override
+                public void uncaughtException(Thread t, Throwable e) {
+                    e.printStackTrace();
+                }
+            });
             try {
                 if (!INITIALIZED.compareAndSet(false, true)) {
                     return;
