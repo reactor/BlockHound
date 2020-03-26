@@ -366,13 +366,6 @@ public class BlockHound {
             }
 
             Consumer<BlockingMethod> originalOnBlockingMethod = onBlockingMethod;
-            onBlockingMethod = m -> {
-                Thread currentThread = Thread.currentThread();
-                if (currentThread instanceof TestThread) {
-                    ((TestThread) currentThread).blockingCallDetected = true;
-                }
-            };
-
             try {
                 Instrumentation instrumentation = ByteBuddyAgent.install();
                 InstrumentationUtils.injectBootstrapClasses(
@@ -390,14 +383,14 @@ public class BlockHound {
                     onBlockingMethod.accept(new BlockingMethod(className, methodName, modifiers));
                 };
 
-                // Eagerly trigger the classloading of `dynamicThreadPredicate` (since classloading is blocking)
-                dynamicThreadPredicate.test(Thread.currentThread());
-                BlockHoundRuntime.dynamicThreadPredicate = dynamicThreadPredicate;
-
-                // Eagerly trigger the classloading of `threadPredicate` (since classloading is blocking)
-                threadPredicate = threadPredicate.or(TestThread.class::isInstance);
-                threadPredicate.test(Thread.currentThread());
-                BlockHoundRuntime.threadPredicate = threadPredicate;
+                onBlockingMethod = m -> {
+                    Thread currentThread = Thread.currentThread();
+                    if (currentThread instanceof TestThread) {
+                        ((TestThread) currentThread).blockingCallDetected = true;
+                    }
+                };
+                BlockHoundRuntime.dynamicThreadPredicate = t -> false;
+                BlockHoundRuntime.threadPredicate = TestThread.class::isInstance;
 
                 instrument(instrumentation);
             }
@@ -406,6 +399,15 @@ public class BlockHound {
             }
 
             testInstrumentation();
+
+            // Eagerly trigger the classloading of `dynamicThreadPredicate` (since classloading is blocking)
+            dynamicThreadPredicate.test(Thread.currentThread());
+            BlockHoundRuntime.dynamicThreadPredicate = dynamicThreadPredicate;
+
+            // Eagerly trigger the classloading of `threadPredicate` (since classloading is blocking)
+            threadPredicate.test(Thread.currentThread());
+            BlockHoundRuntime.threadPredicate = threadPredicate;
+
             onBlockingMethod = originalOnBlockingMethod;
         }
 
