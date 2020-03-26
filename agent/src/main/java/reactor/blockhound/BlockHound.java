@@ -361,17 +361,19 @@ public class BlockHound {
          * Installs the agent and runs the instrumentation, but only if BlockHound wasn't installed yet (it is global).
          */
         public void install() {
-            Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-                @Override
-                public void uncaughtException(Thread t, Throwable e) {
-                    e.printStackTrace();
-                }
-            });
-            try {
-                if (!INITIALIZED.compareAndSet(false, true)) {
-                    return;
-                }
+            if (!INITIALIZED.compareAndSet(false, true)) {
+                return;
+            }
 
+            Consumer<BlockingMethod> originalOnBlockingMethod = onBlockingMethod;
+            onBlockingMethod = m -> {
+                Thread currentThread = Thread.currentThread();
+                if (currentThread instanceof TestThread) {
+                    ((TestThread) currentThread).blockingCallDetected = true;
+                }
+            };
+
+            try {
                 Instrumentation instrumentation = ByteBuddyAgent.install();
                 InstrumentationUtils.injectBootstrapClasses(
                         instrumentation,
@@ -403,13 +405,6 @@ public class BlockHound {
                 throw new RuntimeException(e);
             }
 
-            Consumer<BlockingMethod> originalOnBlockingMethod = onBlockingMethod;
-            onBlockingMethod = m -> {
-                Thread currentThread = Thread.currentThread();
-                if (currentThread instanceof TestThread) {
-                    ((TestThread) currentThread).blockingCallDetected = true;
-                }
-            };
             testInstrumentation();
             onBlockingMethod = originalOnBlockingMethod;
         }
@@ -432,7 +427,7 @@ public class BlockHound {
                 message += "You need to add '-XX:+AllowRedefinitionToAddDeleteMethods' JVM flag.\n";
                 message += "See https://github.com/reactor/BlockHound/issues/33 for more info.";
             }
-            catch (Throwable ignored) {
+            catch (ClassNotFoundException ignored) {
             }
 
             throw new IllegalStateException(message);
