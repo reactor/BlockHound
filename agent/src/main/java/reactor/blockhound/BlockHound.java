@@ -387,6 +387,7 @@ public class BlockHound {
                 BlockHoundRuntime.dynamicThreadPredicate = dynamicThreadPredicate;
 
                 // Eagerly trigger the classloading of `threadPredicate` (since classloading is blocking)
+                threadPredicate = threadPredicate.or(TestThread.class::isInstance);
                 threadPredicate.test(Thread.currentThread());
                 BlockHoundRuntime.threadPredicate = threadPredicate;
 
@@ -395,6 +396,39 @@ public class BlockHound {
             catch (Throwable e) {
                 throw new RuntimeException(e);
             }
+
+            Consumer<BlockingMethod> originalOnBlockingMethod = onBlockingMethod;
+            onBlockingMethod = m -> {
+                Thread currentThread = Thread.currentThread();
+                if (currentThread instanceof TestThread) {
+                    ((TestThread) currentThread).blockingCallDetected = true;
+                }
+            };
+            testInstrumentation();
+            onBlockingMethod = originalOnBlockingMethod;
+        }
+
+        private void testInstrumentation() {
+            TestThread thread = new TestThread();
+            thread.startAndWait();
+
+            // Set in the artificial blockingMethodConsumer, see install()
+            if (thread.blockingCallDetected) {
+                return;
+            }
+
+            String message = "The instrumentation have failed.";
+            try {
+                // Test some public API class added in Java 13
+                Class.forName("sun.nio.ch.NioSocketImpl");
+                message += "\n";
+                message += "It looks like you're running on JDK 13+.\n";
+                message += "You need to add '-XX:+AllowRedefinitionToAddDeleteMethods' JVM flag.\n";
+                message += "See https://github.com/reactor/BlockHound/issues/33 for more info.";
+            } catch (ClassNotFoundException ignored) {
+            }
+
+            throw new IllegalStateException(message);
         }
 
         private void instrument(Instrumentation instrumentation) {
