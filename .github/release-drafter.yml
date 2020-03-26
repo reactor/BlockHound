@@ -1,5 +1,5 @@
-name-template: $NEXT_PATCH_VERSION
-tag-template: $NEXT_PATCH_VERSION
+name-template: $NEXT_PATCH_VERSION.RELEASE
+tag-template: $NEXT_PATCH_VERSION.RELEASE
 template: |
     # What's Changed
 
