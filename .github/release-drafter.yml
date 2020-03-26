@@ -1,5 +1,8 @@
+name-template: $NEXT_PATCH_VERSION
+tag-template: $NEXT_PATCH_VERSION
 template: |
     # What's Changed
+
     $CHANGES
 categories:
   - title: 🚀 Features / Enhancements
@@ -7,4 +10,9 @@ categories:
   - title: 🐛 Bug Fixes
     label: type/bug
   - title: 📖 Documentation
-    label: type/docs
+    label: type/documentation
+  - title: 🧹 Housekeeping
+    label: type/chore
+  - title: 📦 Dependency updates
+    label: type/dependency-upgrade
+
