@@ -34,7 +34,7 @@ If you see such behaviour, **consider [overriding the callback](customization.md
 ```java
 BlockHound.install(builder -> {
     builder.blockingMethodCallback(it -> {
-        new Exception(it.toString().printStackTrace();
+        new Exception(it.toString()).printStackTrace();
     });
 });
 ```
