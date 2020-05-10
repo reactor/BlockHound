@@ -35,5 +35,11 @@ public class LoggingIntegration implements BlockHoundIntegration {
             builder.allowBlockingCallsInside("ch.qos.logback.classic.Logger", "callAppenders");
         } catch (ClassNotFoundException e) {
         }
+
+        try {
+            Class.forName("org.apache.logging.log4j.core.config.AppenderControl");
+            builder.allowBlockingCallsInside("org.apache.logging.log4j.core.config.AppenderControl", "callAppender");
+        } catch (ClassNotFoundException e) {
+        }
     }
 }
