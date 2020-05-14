@@ -403,6 +403,8 @@ public class BlockHound {
             // Eagerly trigger the classloading of `dynamicThreadPredicate` (since classloading is blocking)
             dynamicThreadPredicate.test(Thread.currentThread());
             BlockHoundRuntime.dynamicThreadPredicate = dynamicThreadPredicate;
+            // Null out the state so it can be evaluated with the configured dynamicThreadPredicate
+            BlockHoundRuntime.STATE.set(null);
 
             // Eagerly trigger the classloading of `threadPredicate` (since classloading is blocking)
             threadPredicate.test(Thread.currentThread());
