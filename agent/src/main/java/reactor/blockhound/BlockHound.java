@@ -409,6 +409,9 @@ public class BlockHound {
             BlockHoundRuntime.threadPredicate = threadPredicate;
 
             onBlockingMethod = originalOnBlockingMethod;
+
+            // Re-evaluate the current thread's state after assigning user-provided predicates
+            BlockHoundRuntime.STATE.remove();
         }
 
         private void testInstrumentation() {
