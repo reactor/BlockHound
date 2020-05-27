@@ -19,6 +19,11 @@ package reactor.blockhound.integration;
 import com.google.auto.service.AutoService;
 import reactor.blockhound.BlockHound;
 
+/**
+ *
+ * @deprecated replaced by a more generic stdout/stderr solution: {@link StandardOutputIntegration}
+ */
+@Deprecated
 @AutoService(BlockHoundIntegration.class)
 public class LoggingIntegration implements BlockHoundIntegration {
 
