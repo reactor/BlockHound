@@ -22,7 +22,7 @@ jmh {
 dependencies {
     switch (project.findProperty("jmhTarget")) {
         case "baseline":
-            jmh 'io.projectreactor.tools:blockhound:1.0.0.M5'
+            jmh 'io.projectreactor.tools:blockhound:1.0.3.RELEASE'
             break
         default:
             jmh project(path: ":agent", configuration: 'shadow')
