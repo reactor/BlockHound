@@ -52,7 +52,7 @@ tasks.check.dependsOn tasks.jarFileTest
 dependencies {
     compileOnly 'com.google.auto.service:auto-service:1.0-rc6'
 
-    compile 'net.bytebuddy:byte-buddy:1.10.8'
+    compile 'net.bytebuddy:byte-buddy:1.10.11'
     compile 'net.bytebuddy:byte-buddy-agent:1.10.11'
 
     compileOnly 'io.projectreactor:reactor-core:3.2.5.RELEASE'
