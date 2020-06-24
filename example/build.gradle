@@ -46,7 +46,7 @@ dependencies {
     testCompile 'io.reactivex.rxjava2:rxjava:2.2.18'
 
     testCompile 'junit:junit:4.13'
-    testCompile 'org.assertj:assertj-core:3.15.0'
+    testCompile 'org.assertj:assertj-core:3.16.1'
 
     reactor_3_3_x 'io.projectreactor:reactor-core:3.3.0.RC1'
 }
