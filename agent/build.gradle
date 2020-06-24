@@ -50,7 +50,7 @@ project.tasks.jarFileTest.configure {
 tasks.check.dependsOn tasks.jarFileTest
 
 dependencies {
-    compileOnly 'com.google.auto.service:auto-service:1.0-rc6'
+    compileOnly 'com.google.auto.service:auto-service:1.0-rc7'
 
     compile 'net.bytebuddy:byte-buddy:1.10.12'
     compile 'net.bytebuddy:byte-buddy-agent:1.10.12'
