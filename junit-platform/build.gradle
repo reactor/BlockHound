@@ -28,7 +28,7 @@ dependencies {
     testCompile 'io.projectreactor:reactor-core:3.2.2.RELEASE'
 
     testCompile 'org.junit.jupiter:junit-jupiter-api:5.6.0'
-    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.6.0'
+    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.6.2'
 
     // FIXME remove once https://github.com/gradle/gradle/issues/8806 is fixed
     testRuntime 'org.junit.platform:junit-platform-launcher:1.0.0'
