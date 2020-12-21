@@ -53,7 +53,7 @@ dependencies {
     compileOnly 'com.google.auto.service:auto-service:1.0-rc6'
 
     compile 'net.bytebuddy:byte-buddy:1.10.12'
-    compile 'net.bytebuddy:byte-buddy-agent:1.10.12'
+    compile 'net.bytebuddy:byte-buddy-agent:1.10.19'
 
     compileOnly 'io.projectreactor:reactor-core:3.2.5.RELEASE'
     compileOnly 'io.reactivex.rxjava2:rxjava:2.2.18'
