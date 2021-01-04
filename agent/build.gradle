@@ -59,7 +59,7 @@ dependencies {
     compileOnly 'io.reactivex.rxjava2:rxjava:2.2.18'
 
     jarFileTestCompile 'org.assertj:assertj-core:3.18.1'
-    jarFileTestCompile 'junit:junit:4.13'
+    jarFileTestCompile 'junit:junit:4.13.1'
 }
 
 task sourcesJar(type: Jar) {
