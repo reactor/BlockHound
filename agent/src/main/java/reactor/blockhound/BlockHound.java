@@ -105,11 +105,10 @@ public class BlockHound {
 
         private BlockHoundPoolStrategy() { }
 
-        //FIXME prepare for a bump in ByteBuddy
-//        @Override
-//        public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader, String name) {
-//            return typePool(classFileLocator, classLoader);
-//        }
+        @Override
+        public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader, String name) {
+            return typePool(classFileLocator, classLoader);
+        }
 
         @Override
         public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
