@@ -50,26 +50,27 @@ project.tasks.jarFileTest.configure {
 tasks.check.dependsOn tasks.jarFileTest
 
 dependencies {
-    compileOnly 'com.google.auto.service:auto-service:1.0-rc7'
+    compileOnly 'com.google.auto.service:auto-service-annotations:1.0-rc7'
+    annotationProcessor 'com.google.auto.service:auto-service:1.0-rc7'
 
-    compile 'net.bytebuddy:byte-buddy:1.10.19'
-    compile 'net.bytebuddy:byte-buddy-agent:1.10.19'
+    implementation 'net.bytebuddy:byte-buddy:1.10.19'
+    implementation 'net.bytebuddy:byte-buddy-agent:1.10.19'
 
     compileOnly 'io.projectreactor:reactor-core:3.2.5.RELEASE'
     compileOnly 'io.reactivex.rxjava2:rxjava:2.2.18'
 
-    jarFileTestCompile 'org.assertj:assertj-core:3.18.1'
-    jarFileTestCompile 'junit:junit:4.13.1'
+    jarFileTestImplementation 'org.assertj:assertj-core:3.18.1'
+    jarFileTestImplementation 'junit:junit:4.13.1'
 }
 
 task sourcesJar(type: Jar) {
-    classifier 'sources'
+    archiveClassifier.set('sources')
     from sourceSets.main.allJava
 }
 
 task javadocJar(type: Jar) {
     from javadoc
-    classifier = 'javadoc'
+    archiveClassifier.set('javadoc')
 }
 
 publishing {

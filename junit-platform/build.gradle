@@ -19,29 +19,31 @@ test {
 }
 
 dependencies {
-    compileOnly 'com.google.auto.service:auto-service:1.0-rc7'
-    compile project(path: ":agent", configuration: 'shadow')
+    compileOnly 'com.google.auto.service:auto-service-annotations:1.0-rc7'
+    annotationProcessor 'com.google.auto.service:auto-service:1.0-rc7'
+
+    implementation project(path: ":agent", configuration: 'shadow')
 
     compileOnly 'org.junit.platform:junit-platform-launcher:1.0.0'
 
-    testCompile 'org.assertj:assertj-core:3.18.1'
-    testCompile 'io.projectreactor:reactor-core:3.2.2.RELEASE'
+    testImplementation 'org.assertj:assertj-core:3.18.1'
+    testImplementation 'io.projectreactor:reactor-core:3.2.2.RELEASE'
 
-    testCompile 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-    testRuntime 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
 
     // FIXME remove once https://github.com/gradle/gradle/issues/8806 is fixed
-    testRuntime 'org.junit.platform:junit-platform-launcher:1.0.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.0.0'
 }
 
 task sourcesJar(type: Jar) {
-    classifier 'sources'
+    archiveClassifier.set('sources')
     from sourceSets.main.allJava
 }
 
 task javadocJar(type: Jar) {
     from javadoc
-    classifier = 'javadoc'
+    archiveClassifier.set('javadoc')
 }
 
 jar {
