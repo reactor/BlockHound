@@ -25,6 +25,7 @@ import net.bytebuddy.agent.builder.AgentBuilder.RedefinitionStrategy;
 import net.bytebuddy.agent.builder.AgentBuilder.RedefinitionStrategy.DiscoveryStrategy;
 import net.bytebuddy.agent.builder.AgentBuilder.TypeStrategy;
 import net.bytebuddy.asm.Advice;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.pool.TypePool.CacheProvider;
@@ -96,6 +97,28 @@ public class BlockHound {
 
     private BlockHound() {
 
+    }
+
+    private static final class BlockHoundPoolStrategy implements PoolStrategy {
+
+        public static final PoolStrategy INSTANCE = new BlockHoundPoolStrategy();
+
+        private BlockHoundPoolStrategy() { }
+
+        //FIXME prepare for a bump in ByteBuddy
+//        @Override
+//        public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader, String name) {
+//            return typePool(classFileLocator, classLoader);
+//        }
+
+        @Override
+        public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
+            return new TypePool.Default(
+                    new CacheProvider.Simple(),
+                    classFileLocator,
+                    TypePool.Default.ReaderMode.FAST
+            );
+        }
     }
 
     public static class Builder {
@@ -473,11 +496,7 @@ public class BlockHound {
                     .with(DescriptionStrategy.Default.POOL_FIRST)
                     // Override PoolStrategy because the default one will cache java.lang.Object,
                     // and we need to instrument it.
-                    .with((PoolStrategy) (classFileLocator, classLoader) -> new TypePool.Default(
-                            new CacheProvider.Simple(),
-                            classFileLocator,
-                            TypePool.Default.ReaderMode.FAST
-                    ))
+                    .with(BlockHoundPoolStrategy.INSTANCE)
                     .with(AgentBuilder.Listener.StreamWriting.toSystemError().withErrorsOnly())
 
                     // Do not ignore JDK classes

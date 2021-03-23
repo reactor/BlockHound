@@ -53,8 +53,9 @@ public class JarFileShadingTest extends AbstractJarFileTest {
 		);
 	}
 
+	@SuppressWarnings("unchecked")
 	private ListAssert<String> assertThatFileList(Path path) throws IOException {
-		return (ListAssert) assertThat(Files.list(path))
+		return (ListAssert<String>) assertThat(Files.list(path))
 				.extracting(Path::getFileName)
 				.extracting(Path::toString)
 				.extracting(it -> it.endsWith("/") ? it.substring(0, it.length() - 1) : it);
