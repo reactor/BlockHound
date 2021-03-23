@@ -4,7 +4,7 @@ subprojects {
     group = "io.projectreactor.tools"
 
     repositories {
-        jcenter()
+        mavenCentral()
     }
 
     tasks.withType(Test).all {

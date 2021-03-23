@@ -8,7 +8,7 @@ description = "BlockHound JUnit Platform Integration"
 sourceCompatibility = targetCompatibility = 8
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 test {
