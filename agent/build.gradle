@@ -60,7 +60,7 @@ dependencies {
     compileOnly 'io.reactivex.rxjava2:rxjava:2.2.18'
 
     jarFileTestImplementation 'org.assertj:assertj-core:3.19.0'
-    jarFileTestImplementation 'junit:junit:4.13.1'
+    jarFileTestImplementation 'junit:junit:4.13.2'
 }
 
 task sourcesJar(type: Jar) {
