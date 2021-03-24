@@ -2,7 +2,7 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '6.1.0'
     id "java"
     id "maven-publish"
-    id "org.unbroken-dome.test-sets" version "2.2.1"
+    id "org.unbroken-dome.test-sets" version "3.0.1"
 }
 
 description = "BlockHound Java Agent"
