@@ -1,0 +1,41 @@
+name: Snapshot
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  checkSnapshot:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 13 # Modern JVM is needed for Java 10+ specific tests
+      - name: Run tests and javadoc
+        run: ./gradlew check javadoc
+  publishSnapshot:
+    runs-on: ubuntu-20.04
+    needs: checkSnapshot
+    environment: snapshot
+    env: #change this after a release
+      BLOCKHOUND_VERSION: 1.0.5.BUILD-SNAPSHOT
+    steps:
+      - name: check version
+        if: ${{ !endsWith(env.BLOCKHOUND_VERSION, '.BUILD-SNAPSHOT') }}
+        run: |
+          echo "::error ::$BLOCKHOUND_VERSION is not following the x.y.z.BUILD-SNAPSHOT format"
+          exit 1
+      - uses: actions/checkout@v1
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 8
+      - name: Publish Snapshot
+        run: ./gradlew --no-daemon -Pversion=$BLOCKHOUND_VERSION publish
+        env:
+          GRADLE_PUBLISH_REPO_URL: https://repo.spring.io/libs-snapshot-local/
+          GRADLE_PUBLISH_MAVEN_USER: ${{secrets.ARTIFACTORY_USERNAME}}
+          GRADLE_PUBLISH_MAVEN_PASSWORD: ${{secrets.ARTIFACTORY_PASSWORD}}

@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  release: #note: fortunately this event is not triggered for draft releases, as `released` could include drafts
+    types: [ prereleased, released ]
+
+jobs:
+  publishRelease:
+    runs-on: ubuntu-20.04
+    environment: release
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: 8
+      - name: Publish Release
+        if: endsWith(github.event.release.tag_name, '.RELEASE')
+        run: ./gradlew --no-daemon -Pversion="${{github.event.release.tag_name}}" publish
+        env:
+          GRADLE_PUBLISH_REPO_URL: https://api.bintray.com/maven/spring/jars/BlockHound/
+          GRADLE_PUBLISH_MAVEN_USER: ${{secrets.BINTRAY_USER}}
+          GRADLE_PUBLISH_MAVEN_PASSWORD: ${{secrets.BINTRAY_API_KEY}}
+      - name: Publish Milestone
+        if: github.event.release.prerelease && (contains(github.event.release.tag_name, '.M') || contains(github.event.release.tag_name, '.RC'))
+        run: ./gradlew --no-daemon -Pversion="${{github.event.release.tag_name}}" publish
+        env:
+          GRADLE_PUBLISH_REPO_URL: https://repo.spring.io/libs-milestone-local/
+          GRADLE_PUBLISH_MAVEN_USER: ${{secrets.ARTIFACTORY_USERNAME}}
+          GRADLE_PUBLISH_MAVEN_PASSWORD: ${{secrets.ARTIFACTORY_PASSWORD}}
