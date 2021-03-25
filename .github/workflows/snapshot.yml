@@ -19,7 +19,7 @@ jobs:
   publishSnapshot:
     runs-on: ubuntu-20.04
     needs: checkSnapshot
-    environment: release
+    environment: snapshot
     env: #change this after a release
       BLOCKHOUND_VERSION: 1.0.5.BUILD-SNAPSHOT
     steps:
