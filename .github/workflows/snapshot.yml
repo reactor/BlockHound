@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - 159-migrateToGhaIncludingSnapshots #temp
 
 jobs:
   checkSnapshot:
@@ -22,7 +21,7 @@ jobs:
     needs: checkSnapshot
     environment: release
     env: #change this after a release
-      BLOCKHOUND_VERSION: 1.0.5.BUILD-SNAsPSHOT
+      BLOCKHOUND_VERSION: 1.0.5.BUILD-SNAPSHOT
     steps:
       - name: check version
         if: ${{ !endsWith(env.BLOCKHOUND_VERSION, '.BUILD-SNAPSHOT') }}
