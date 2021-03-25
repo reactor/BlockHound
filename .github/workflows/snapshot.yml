@@ -13,7 +13,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
-          java-version: 13 #10+ is needed for Examples
+          java-version: 13 # Modern JVM is needed for Java 10+ specific tests
       - name: Run tests and javadoc
         run: ./gradlew check javadoc
   publishSnapshot:
