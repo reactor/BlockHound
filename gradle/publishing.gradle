@@ -27,7 +27,7 @@ plugins.withType(MavenPublishPlugin) {
                         developer {
                             id = 'bsideup'
                             name = 'Sergei Egorov'
-                            email = 'segorov@pivotal.io'
+                            email = 'bsideup@gmail.com'
                         }
                     }
                 }
