@@ -3,8 +3,10 @@ plugins.withType(MavenPublishPlugin) {
         publications {
             mavenJava(MavenPublication) { publication ->
                 pom {
+                    afterEvaluate {
+                        name = project.description ?: "BlockHound"
+                    }
                     description = 'Java agent to detect blocking calls from non-blocking threads.'
-                    name = project.description ?: description
                     url = 'https://github.com/reactor/BlockHound'
                     licenses {
                         license {
