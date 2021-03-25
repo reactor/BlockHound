@@ -296,6 +296,9 @@ public class BlockHound {
         /**
          * Allows blocking calls inside any method of a class with name identified by the provided className
          * and which name matches the provided methodName.
+         * <p>
+         * Note that for static initializers, you can use {@link BlockHound#STATIC_INITIALIZER} as the methodName.
+         * Constructors are currently not supported.
          *
          * @param className class' name (e.g. "java.lang.Thread")
          * @param methodName a method name
@@ -310,6 +313,9 @@ public class BlockHound {
         /**
          * Disallows blocking calls inside any method of a class with name identified by the provided className
          * and which name matches the provided methodName.
+         * <p>
+         * Note that for static initializers, you can use {@link BlockHound#STATIC_INITIALIZER} as the methodName.
+         * Constructors are currently not supported.
          *
          * @param className class' name (e.g. "java.lang.Thread")
          * @param methodName a method name
