@@ -16,11 +16,13 @@ jobs:
           java-version: 8
       - name: Publish Release
         if: endsWith(github.event.release.tag_name, '.RELEASE')
-        run: ./gradlew --no-daemon -Pversion="${{github.event.release.tag_name}}" publish
+        run: ./gradlew --no-daemon -Pversion="${{github.event.release.tag_name}}" sign publish
         env:
-          GRADLE_PUBLISH_REPO_URL: https://api.bintray.com/maven/spring/jars/BlockHound/
-          GRADLE_PUBLISH_MAVEN_USER: ${{secrets.BINTRAY_USER}}
-          GRADLE_PUBLISH_MAVEN_PASSWORD: ${{secrets.BINTRAY_API_KEY}}
+          GRADLE_PUBLISH_REPO_URL: https://s01.oss.sonatype.org/service/local/staging/deploy/maven2
+          GRADLE_PUBLISH_MAVEN_USER: ${{secrets.MAVEN_USER}}
+          GRADLE_PUBLISH_MAVEN_PASSWORD: ${{secrets.MAVEN_PASSWORD}}
+          GRADLE_SIGNING_KEY: ${{secrets.SIGNING_KEY}}
+          GRADLE_SIGNING_PASSWORD: ${{secrets.SIGNING_PASSPHRASE}}
       - name: Publish Milestone
         if: github.event.release.prerelease && (contains(github.event.release.tag_name, '.M') || contains(github.event.release.tag_name, '.RC'))
         run: ./gradlew --no-daemon -Pversion="${{github.event.release.tag_name}}" publish

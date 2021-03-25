@@ -16,6 +16,27 @@ subprojects {
         }
     }
 
+
+    plugins.withType(SigningPlugin) {
+        //skipping if not .RELEASE. Note the task graph is still being evaluated here.
+        //This works because the version is only defined by CI scripts, and only the release one should use .RELEASE suffix
+        def shouldSign = version.toString().endsWith(".RELEASE")
+        project.signing {
+            required { shouldSign }
+
+            //skip the configuration entirely if !shouldSign. the task shouldn't even be available
+            if (shouldSign) {
+                def signingKey = System.getenv('GRADLE_SIGNING_KEY')
+                def signingPassword = System.getenv('GRADLE_SIGNING_PASSWORD')
+                useInMemoryPgpKeys(signingKey, signingPassword)
+
+                afterEvaluate {
+                    sign publishing.publications.mavenJava
+                }
+            }
+        }
+    }
+
     plugins.withType(MavenPublishPlugin) {
         project.publishing {
             repositories {
