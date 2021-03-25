@@ -23,7 +23,7 @@ jobs:
     env:
       BLOCKHOUND_VERSION: 1.0.5.BUILD-SNAPSHOT #change this after a release
     steps:
-      - name: double check version
+      - name: check version
         if: !endsWith(env.BLOCKHOUND_VERSION, '.BUILD-SNAPSHOT')
         run: |
           echo "::error ::$BLOCKHOUND_VERSION is not following the x.y.z.BUILD-SNAPSHOT format"
