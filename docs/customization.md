@@ -40,6 +40,14 @@ builder.disallowBlockingCallsInside(
 );
 ```
 
+This will allow blocking method calls inside the static initializer block of `MyClass` down the callstack:
+```java
+builder.allowBlockingCallsInside(
+    "com.example.MyClass",
+    BlockHound.STATIC_INITIALIZER
+);
+```
+
 ## Custom blocking method callback
 * `Builder#blockingMethodCallback(Consumer<BlockingMethod> consumer)`
 

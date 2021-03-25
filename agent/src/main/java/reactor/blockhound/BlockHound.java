@@ -62,7 +62,13 @@ import static reactor.blockhound.NativeWrappingClassFileTransformer.BLOCK_HOUND_
  */
 public class BlockHound {
 
-    static final String PREFIX = "$$BlockHound$$_";
+    /**
+     * The special methodName that should be used in e.g. {@link Builder#allowBlockingCallsInside(String, String)}
+     * when one wants to reference the static initializer block rather than a class method.
+     */
+    public static final String STATIC_INITIALIZER = "<clinit>";
+
+    static final String PREFIX                 = "$$BlockHound$$_";
 
     private static final AtomicBoolean INITIALIZED = new AtomicBoolean(false);
 
@@ -294,6 +300,7 @@ public class BlockHound {
          * @param className class' name (e.g. "java.lang.Thread")
          * @param methodName a method name
          * @return this
+         * @see BlockHound#STATIC_INITIALIZER
          */
         public Builder allowBlockingCallsInside(String className, String methodName) {
             allowances.computeIfAbsent(className, __ -> new HashMap<>()).put(methodName, true);
@@ -307,6 +314,7 @@ public class BlockHound {
          * @param className class' name (e.g. "java.lang.Thread")
          * @param methodName a method name
          * @return this
+         * @see BlockHound#STATIC_INITIALIZER
          */
         public Builder disallowBlockingCallsInside(String className, String methodName) {
             allowances.computeIfAbsent(className, __ -> new HashMap<>()).put(methodName, false);
