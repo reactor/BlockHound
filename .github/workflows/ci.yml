@@ -1,6 +1,6 @@
 name: CI
 
-on: [push, pull_request]
+on: pull_request
 
 jobs:
   build:
@@ -12,5 +12,5 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 13
-    - name: Build with Gradle
+    - name: Run tests and javadoc
       run: ./gradlew check javadoc
