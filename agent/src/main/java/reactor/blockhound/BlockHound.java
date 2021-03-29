@@ -62,12 +62,6 @@ import static reactor.blockhound.NativeWrappingClassFileTransformer.BLOCK_HOUND_
  */
 public class BlockHound {
 
-    /**
-     * The special methodName that should be used in e.g. {@link Builder#allowBlockingCallsInside(String, String)}
-     * when one wants to reference the static initializer block rather than a class method.
-     */
-    public static final String STATIC_INITIALIZER = "<clinit>";
-
     static final String PREFIX                 = "$$BlockHound$$_";
 
     private static final AtomicBoolean INITIALIZED = new AtomicBoolean(false);
@@ -126,6 +120,10 @@ public class BlockHound {
         }
     }
 
+    /**
+     * A builder for configuration of the BlockHound java agent, passed to each {@link BlockHoundIntegration}'s
+     * {@link BlockHoundIntegration#applyTo(Builder) applyTo} method when {@link BlockHound#install(BlockHoundIntegration...) installing}.
+     */
     public static class Builder {
 
         private final Map<String, Map<String, Set<String>>> blockingMethods = new HashMap<String, Map<String, Set<String>>>() {{
@@ -261,6 +259,58 @@ public class BlockHound {
         private Predicate<Thread> dynamicThreadPredicate = t -> false;
 
         /**
+         * A phase of the builder where allowed blocking methods are configured for a given class.
+         * See {@link Builder#allowBlockingCallsInside(String)}.
+         * <p>
+         * Note that methods of this class directly mutate the {@link Builder} as if one was calling
+         * {@link Builder#allowBlockingCallsInside(String, String)}. One MUST specify at least one
+         * allowed method for it to have an effect on the configuration.
+         */
+        public class BuilderAllowSpec {
+
+            final String className;
+
+            private BuilderAllowSpec(String className) {
+                this.className = className;
+            }
+
+            /**
+             * Allow blocking calls inside the static initializer block of the currently configured
+             * class. Use {@link #and()} to exit the class-specific phase and return
+             * to the {@link Builder}.
+             *
+             * @return this {@link BuilderAllowSpec} for further configuration of the given class
+             * @see #and()
+             */
+            public BuilderAllowSpec forStaticInitializer() {
+                Builder.this.allowBlockingCallsInside(this.className, "<clinit>");
+                return this;
+            }
+
+            /**
+             * Allow blocking calls inside the specified method of the currently configured
+             * class. Use {@link #and()} to exit the class-specific phase and return
+             * to the {@link Builder}.
+             *
+             * @return this {@link BuilderAllowSpec} for further configuration of the given class
+             * @see #and()
+             */
+            public BuilderAllowSpec forMethod(String methodName) {
+                Builder.this.allowBlockingCallsInside(this.className, methodName);
+                return this;
+            }
+
+            /**
+             * Exit the class-specific phase and return to the {@link Builder}.
+             *
+             * @return the {@link Builder}
+             */
+            public Builder and() {
+                return Builder.this;
+            }
+        }
+
+        /**
          * Marks provided method of the provided class as "blocking".
          *
          * The descriptor should be in JVM's format:
@@ -297,13 +347,14 @@ public class BlockHound {
          * Allows blocking calls inside any method of a class with name identified by the provided className
          * and which name matches the provided methodName.
          * <p>
-         * Note that for static initializers, you can use {@link BlockHound#STATIC_INITIALIZER} as the methodName.
-         * Constructors are currently not supported.
+         * A sub-builder is available to guide users towards more advanced cases like static initializers,
+         * see {@link #allowBlockingCallsInside(String)} and {@link BuilderAllowSpec}.
          *
          * @param className class' name (e.g. "java.lang.Thread")
          * @param methodName a method name
          * @return this
-         * @see BlockHound#STATIC_INITIALIZER
+         * @see #allowBlockingCallsInside(String)
+         * @see BuilderAllowSpec
          */
         public Builder allowBlockingCallsInside(String className, String methodName) {
             allowances.computeIfAbsent(className, __ -> new HashMap<>()).put(methodName, true);
@@ -311,16 +362,24 @@ public class BlockHound {
         }
 
         /**
+         * Configure allowed blocking calls inside methods of a class with name identified by the provided className.
+         * Note that this doesn't change the configuration unless one further specifies which methods are allowed.
+         * Use {@link BuilderAllowSpec#and()} to get back to this {@link Builder}.
+         *
+         * @param className class' name (e.g. "java.lang.Thread")
+         * @return a sub-step of the builder as a {@link BuilderAllowSpec}
+         */
+        public BuilderAllowSpec allowBlockingCallsInside(String className) {
+            return new BuilderAllowSpec(className);
+        }
+
+        /**
          * Disallows blocking calls inside any method of a class with name identified by the provided className
          * and which name matches the provided methodName.
-         * <p>
-         * Note that for static initializers, you can use {@link BlockHound#STATIC_INITIALIZER} as the methodName.
-         * Constructors are currently not supported.
          *
          * @param className class' name (e.g. "java.lang.Thread")
          * @param methodName a method name
          * @return this
-         * @see BlockHound#STATIC_INITIALIZER
          */
         public Builder disallowBlockingCallsInside(String className, String methodName) {
             allowances.computeIfAbsent(className, __ -> new HashMap<>()).put(methodName, false);

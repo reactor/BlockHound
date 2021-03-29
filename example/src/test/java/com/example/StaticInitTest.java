@@ -17,6 +17,7 @@
 package com.example;
 
 import org.junit.Test;
+
 import reactor.blockhound.BlockHound;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -24,9 +25,7 @@ import reactor.core.scheduler.Schedulers;
 public class StaticInitTest {
 
     static {
-        BlockHound.install(b -> {
-            b.allowBlockingCallsInside(ClassWithStaticInit.class.getName(), BlockHound.STATIC_INITIALIZER);
-        });
+        BlockHound.install(b -> b.allowBlockingCallsInside(ClassWithStaticInit.class.getName()).forStaticInitializer());
     }
 
     @Test
