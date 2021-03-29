@@ -259,12 +259,7 @@ public class BlockHound {
         private Predicate<Thread> dynamicThreadPredicate = t -> false;
 
         /**
-         * A phase of the builder where allowed blocking methods are configured for a given class.
-         * See {@link Builder#allowBlockingCallsInside(String)}.
-         * <p>
-         * Note that methods of this class directly mutate the {@link Builder} as if one was calling
-         * {@link Builder#allowBlockingCallsInside(String, String)}. One MUST specify at least one
-         * allowed method for it to have an effect on the configuration.
+         * Set up a class-specific method allowance. See {@link Builder#allowBlockingCallsInside(String)}.
          */
         public class BuilderAllowSpec {
 
@@ -276,36 +271,25 @@ public class BlockHound {
 
             /**
              * Allow blocking calls inside the static initializer block of the currently configured
-             * class. Use {@link #and()} to exit the class-specific phase and return
-             * to the {@link Builder}.
-             *
-             * @return this {@link BuilderAllowSpec} for further configuration of the given class
-             * @see #and()
-             */
-            public BuilderAllowSpec forStaticInitializer() {
-                Builder.this.allowBlockingCallsInside(this.className, "<clinit>");
-                return this;
-            }
-
-            /**
-             * Allow blocking calls inside the specified method of the currently configured
-             * class. Use {@link #and()} to exit the class-specific phase and return
-             * to the {@link Builder}.
-             *
-             * @return this {@link BuilderAllowSpec} for further configuration of the given class
-             * @see #and()
-             */
-            public BuilderAllowSpec forMethod(String methodName) {
-                Builder.this.allowBlockingCallsInside(this.className, methodName);
-                return this;
-            }
-
-            /**
-             * Exit the class-specific phase and return to the {@link Builder}.
+             * class and return to the {@link Builder}.
              *
              * @return the {@link Builder}
              */
-            public Builder and() {
+            public Builder forStaticInitializer() {
+                return Builder.this.allowBlockingCallsInside(this.className, "<clinit>");
+            }
+
+            /**
+             * Allow blocking calls inside the specified method(s) of the currently configured
+             * class, and return to the {@link Builder}. An empty array has no effect on the
+             * builder configuration.
+             *
+             * @return the {@link Builder}
+             */
+            public Builder forMethods(String... methodNames) {
+                for (String methodName : methodNames) {
+                    Builder.this.allowBlockingCallsInside(this.className, methodName);
+                }
                 return Builder.this;
             }
         }
@@ -362,9 +346,8 @@ public class BlockHound {
         }
 
         /**
-         * Configure allowed blocking calls inside methods of a class with name identified by the provided className.
-         * Note that this doesn't change the configuration unless one further specifies which methods are allowed.
-         * Use {@link BuilderAllowSpec#and()} to get back to this {@link Builder}.
+         * Configure allowed blocking calls inside methods of a class with name identified by the provided className
+         * and methods identified by the {@link BuilderAllowSpec} chained call.
          *
          * @param className class' name (e.g. "java.lang.Thread")
          * @return a sub-step of the builder as a {@link BuilderAllowSpec}

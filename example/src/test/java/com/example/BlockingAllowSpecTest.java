@@ -28,13 +28,11 @@ public class BlockingAllowSpecTest {
 
     static {
         BlockHound.install(b -> b
-                .allowBlockingCallsInside(BlockingClassA.class.getName())
-                .forStaticInitializer()
-                .forMethod("block")
-                .and()
-                .allowBlockingCallsInside(BlockingClassB.class.getName())
-                .forMethod("block1")
-                .forMethod("block2")
+                // class A
+                .allowBlockingCallsInside(BlockingClassA.class.getName()).forStaticInitializer()
+                .allowBlockingCallsInside(BlockingClassA.class.getName()).forMethods("block")
+                // then B
+                .allowBlockingCallsInside(BlockingClassB.class.getName()).forMethods("block1", "block2")
         );
     }
 
