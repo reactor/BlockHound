@@ -5,6 +5,7 @@ plugins {
 }
 
 description = "BlockHound JUnit Platform Integration"
+ext.detailedDescription = "Integrates the BlockHound Java agent to detect blocking calls in JUnit Platform-based tests."
 
 sourceCompatibility = targetCompatibility = 8
 
