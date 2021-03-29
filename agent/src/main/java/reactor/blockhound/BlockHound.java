@@ -290,11 +290,22 @@ public class BlockHound {
         /**
          * Allows blocking calls inside any method of a class with name identified by the provided className
          * and which name matches the provided methodName.
+         * <p>
+         * There are two special cases for {@code methodName}:
+         * <ul>
+         *     <li>
+         *     static initializers are currently supported by their JVM reserved name of {@code "<clinit>"}
+         *     </li>
+         *     <li>
+         *     constructors are currently not supported (ByteBuddy cannot weave the necessary instrumentation around a constructor that throws an exception, see gh174)
+         *     </li>
+         * </ul>
          *
          * @param className class' name (e.g. "java.lang.Thread")
          * @param methodName a method name
          * @return this
          */
+        // see https://github.com/reactor/BlockHound/issues/174
         public Builder allowBlockingCallsInside(String className, String methodName) {
             allowances.computeIfAbsent(className, __ -> new HashMap<>()).put(methodName, true);
             return this;
@@ -303,11 +314,22 @@ public class BlockHound {
         /**
          * Disallows blocking calls inside any method of a class with name identified by the provided className
          * and which name matches the provided methodName.
+         * <p>
+         * There are two special cases for {@code methodName}:
+         * <ul>
+         *     <li>
+         *     static initializers are currently supported by their JVM reserved name of {@code "<clinit>"}
+         *     </li>
+         *     <li>
+         *     constructors are currently not supported (ByteBuddy cannot weave the necessary instrumentation around a constructor that throws an exception, see gh174)
+         *     </li>
+         * </ul>
          *
          * @param className class' name (e.g. "java.lang.Thread")
          * @param methodName a method name
          * @return this
          */
+        // see https://github.com/reactor/BlockHound/issues/174
         public Builder disallowBlockingCallsInside(String className, String methodName) {
             allowances.computeIfAbsent(className, __ -> new HashMap<>()).put(methodName, false);
             return this;
