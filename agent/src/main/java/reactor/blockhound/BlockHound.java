@@ -260,6 +260,9 @@ public class BlockHound {
 
         /**
          * Set up a class-specific method allowance. See {@link Builder#allowBlockingCallsInside(String)}.
+         * <p>
+         * Note that constructors are currently not supported as exception-throwing constructors cannot
+         * be instrumented by ByteBuddy (see https://github.com/reactor/BlockHound/issues/174).
          */
         public class BuilderAllowSpec {
 
