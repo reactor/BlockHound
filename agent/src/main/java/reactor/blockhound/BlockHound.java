@@ -105,7 +105,7 @@ public class BlockHound {
     public enum TargetType {
 
         /**
-         * Easily references the static initializer block of a class.
+         * Easily reference the static initializer block of a class.
          */
         STATIC_INITIALIZER("<clinit>");
 
@@ -309,11 +309,12 @@ public class BlockHound {
 
         /**
          * Allows blocking calls inside any method of a class with name identified by the provided className
-         * and which name matches the provided methodName.
+         * and which name matches the provided methodName. For special methods, use {@link TargetType} instead.
          *
          * @param className class' name (e.g. "java.lang.Thread")
          * @param methodName a method name
          * @return this
+         * @see #allowBlockingCallsInside(String, TargetType)
          */
         public Builder allowBlockingCallsInside(String className, String methodName) {
             allowances.computeIfAbsent(className, __ -> new HashMap<>()).put(methodName, true);
@@ -321,12 +322,14 @@ public class BlockHound {
         }
 
         /**
-         * Allows blocking calls inside a special kind of method of a class with name identified by
+         * Allows blocking calls inside a special kind of method for a class with name identified by
          * the provided className. The special method is defined by the provided {@link TargetType}.
          *
          * @param className class' name (e.g. "java.lang.Thread")
          * @param method a {@link TargetType}
          * @return this
+         * @see TargetType
+         * @see #allowBlockingCallsInside(String, String)
          */
         public Builder allowBlockingCallsInside(String className, TargetType method) {
             return allowBlockingCallsInside(className, method.methodName);
