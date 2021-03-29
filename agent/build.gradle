@@ -6,6 +6,7 @@ plugins {
 }
 
 description = "BlockHound Java Agent"
+ext.detailedDescription = "Java agent to detect blocking calls from non-blocking threads."
 
 testSets {
     jarFileTest
