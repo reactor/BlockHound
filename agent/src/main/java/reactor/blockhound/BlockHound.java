@@ -99,6 +99,26 @@ public class BlockHound {
 
     }
 
+    /**
+     * Represents special methods that can be used when configuring BlockHound via the {@link Builder}.
+     */
+    public enum TargetType {
+
+        /**
+         * Easily references the static initializer block of a class.
+         */
+        STATIC_INITIALIZER("<clinit>");
+
+        /**
+         * The {@link String} representation of the special method, as in the JVM specification.
+         */
+        public final String methodName;
+
+        TargetType(String methodName) {
+            this.methodName = methodName;
+        }
+    }
+
     private static final class BlockHoundPoolStrategy implements PoolStrategy {
 
         public static final PoolStrategy INSTANCE = new BlockHoundPoolStrategy();
@@ -298,6 +318,18 @@ public class BlockHound {
         public Builder allowBlockingCallsInside(String className, String methodName) {
             allowances.computeIfAbsent(className, __ -> new HashMap<>()).put(methodName, true);
             return this;
+        }
+
+        /**
+         * Allows blocking calls inside a special kind of method of a class with name identified by
+         * the provided className. The special method is defined by the provided {@link TargetType}.
+         *
+         * @param className class' name (e.g. "java.lang.Thread")
+         * @param method a {@link TargetType}
+         * @return this
+         */
+        public Builder allowBlockingCallsInside(String className, TargetType method) {
+            return allowBlockingCallsInside(className, method.methodName);
         }
 
         /**

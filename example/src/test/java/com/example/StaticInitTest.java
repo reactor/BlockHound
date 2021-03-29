@@ -25,7 +25,7 @@ public class StaticInitTest {
 
     static {
         BlockHound.install(b -> {
-            b.allowBlockingCallsInside(ClassWithStaticInit.class.getName(), "<clinit>");
+            b.allowBlockingCallsInside(ClassWithStaticInit.class.getName(),  BlockHound.TargetType.STATIC_INITIALIZER);
         });
     }
 
