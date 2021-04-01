@@ -1,5 +1,5 @@
 plugins {
-    id "java"
+    id "java-library"
     id "maven-publish"
     id "signing"
 }
@@ -24,7 +24,8 @@ dependencies {
     compileOnly 'com.google.auto.service:auto-service-annotations:1.0-rc7'
     annotationProcessor 'com.google.auto.service:auto-service:1.0-rc7'
 
-    implementation project(path: ":agent", configuration: 'shadow')
+    //the api configuration ensures we publish blockhound at compile scope in pom
+    api project(path: ":agent", configuration: 'shadow')
 
     compileOnly 'org.junit.platform:junit-platform-launcher:1.0.0'
 
