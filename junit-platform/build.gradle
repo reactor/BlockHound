@@ -32,7 +32,7 @@ dependencies {
     testImplementation 'org.assertj:assertj-core:3.19.0'
     testImplementation 'io.projectreactor:reactor-core:3.2.2.RELEASE'
 
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.1'
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.1'
 
     // FIXME remove once https://github.com/gradle/gradle/issues/8806 is fixed
