@@ -56,7 +56,7 @@ dependencies {
     annotationProcessor 'com.google.auto.service:auto-service:1.0-rc7'
 
     implementation 'net.bytebuddy:byte-buddy:1.11.15'
-    implementation 'net.bytebuddy:byte-buddy-agent:1.11.15'
+    implementation 'net.bytebuddy:byte-buddy-agent:1.11.16'
 
     compileOnly 'io.projectreactor:reactor-core:3.2.5.RELEASE'
     compileOnly 'io.reactivex.rxjava2:rxjava:2.2.18'
