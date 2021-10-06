@@ -3,7 +3,7 @@ plugins {
     id "java"
     id "maven-publish"
     id "signing"
-    id "org.unbroken-dome.test-sets" version "3.0.1"
+    id "org.unbroken-dome.test-sets" version "4.0.0"
 }
 
 description = "BlockHound Java Agent"
