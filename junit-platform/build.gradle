@@ -21,7 +21,7 @@ test {
 }
 
 dependencies {
-    compileOnly 'com.google.auto.service:auto-service-annotations:1.0'
+    compileOnly 'com.google.auto.service:auto-service-annotations:1.0.1'
     annotationProcessor 'com.google.auto.service:auto-service:1.0'
 
     //the api configuration ensures we publish blockhound at compile scope in pom
