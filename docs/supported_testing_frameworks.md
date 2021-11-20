@@ -2,7 +2,7 @@
 
 ## JUnit Platform (JUnit Jupiter or JUnit Vintage)
 
-BlockHound ships with an optional module providing a [JUnit Platform TestExecutionListener](https://junit.org/junit5/docs/current/api/org/junit/platform/launcher/TestExecutionListener.html):
+BlockHound ships with an optional module providing a [JUnit Platform TestExecutionListener](https://junit.org/junit5/docs/current/user-guide/#launcher-api-listeners-custom):
 
 ```groovy
 'io.projectreactor.tools:blockhound-junit-platform:$VERSION'
