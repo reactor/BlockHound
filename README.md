@@ -48,9 +48,9 @@ repositories {
 }
 
 dependencies {
-  testCompile 'io.projectreactor.tools:blockhound:$LATEST_RELEASE'
-  // testCompile 'io.projectreactor.tools:blockhound:$LATEST_MILESTONE'
-  // testCompile 'io.projectreactor.tools:blockhound:$LATEST_SNAPSHOT'
+  implementation 'io.projectreactor.tools:blockhound:$LATEST_RELEASE'
+  // implementation 'io.projectreactor.tools:blockhound:$LATEST_MILESTONE'
+  // implementation 'io.projectreactor.tools:blockhound:$LATEST_SNAPSHOT'
 }
 ```
 
