@@ -86,13 +86,29 @@ public class BlockHound {
      * @see BlockHound#builder()
      */
     public static void install(BlockHoundIntegration... integrations) {
+        builder(integrations).install();
+    }
+
+    /**
+     * Entrypoint for installation via the {@code -javaagent=} command-line option.
+     *
+     * @param args Options for the agent.
+     * @param instrumentation Instrumentation API.
+     *
+     * @see java.lang.instrument
+     */
+    public static void premain(String[] args, Instrumentation instrumentation) {
+        builder().withInstrumentation(instrumentation).install();
+    }
+
+    private static Builder builder(BlockHoundIntegration... integrations) {
         Builder builder = builder();
         ServiceLoader<BlockHoundIntegration> serviceLoader = ServiceLoader.load(BlockHoundIntegration.class);
         Stream
                 .concat(StreamSupport.stream(serviceLoader.spliterator(), false), Stream.of(integrations))
                 .sorted()
                 .forEach(builder::with);
-        builder.install();
+        return builder;
     }
 
     private BlockHound() {
@@ -254,6 +270,8 @@ public class BlockHound {
 
         private Predicate<Thread> dynamicThreadPredicate = t -> false;
 
+        private Instrumentation instrumentation;
+
         /**
          * Marks provided method of the provided class as "blocking".
          *
@@ -398,6 +416,17 @@ public class BlockHound {
             return this;
         }
 
+        /**
+         * Configure the {@link Instrumentation} to use. If not provided, {@link ByteBuddyAgent#install()} is used.
+         *
+         * @param instrumentation The instrumentation instance to use.
+         * @return this
+         */
+        public Builder withInstrumentation(Instrumentation instrumentation) {
+            this.instrumentation = instrumentation;
+            return this;
+        }
+
         Builder() {
         }
 
@@ -411,7 +440,7 @@ public class BlockHound {
 
             Consumer<BlockingMethod> originalOnBlockingMethod = onBlockingMethod;
             try {
-                Instrumentation instrumentation = ByteBuddyAgent.install();
+                initializeInstrumentation();
                 InstrumentationUtils.injectBootstrapClasses(
                         instrumentation,
                         BLOCK_HOUND_RUNTIME_TYPE.getInternalName(),
@@ -456,6 +485,12 @@ public class BlockHound {
 
             // Re-evaluate the current thread's state after assigning user-provided predicates
             BlockHoundRuntime.STATE.remove();
+        }
+
+        private void initializeInstrumentation() {
+            if (instrumentation == null) {
+                instrumentation = ByteBuddyAgent.install();
+            }
         }
 
         private void testInstrumentation() {

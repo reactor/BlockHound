@@ -23,6 +23,7 @@ shadowJar {
         attributes('Can-Set-Native-Method-Prefix': 'true')
         attributes('Can-Redefine-Classes': 'true')
         attributes('Automatic-Module-Name': 'reactor.blockhound')
+        attributes('Premain-Class': 'reactor.blockhound.BlockHound')
     }
 
     exclude 'META-INF/versions/9/module-info.class'
