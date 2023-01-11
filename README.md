@@ -74,6 +74,36 @@ Where:
 |`$LATEST_MILESTONE`|[![](https://img.shields.io/badge/dynamic/xml.svg?label=&color=blue&query=%2F%2Fmetadata%2Fversioning%2Flatest&url=https%3A%2F%2Frepo.spring.io%2Fmilestone%2Fio%2Fprojectreactor%2Ftools%2Fblockhound%2Fmaven-metadata.xml)](https://repo.spring.io/milestone/io/projectreactor/tools/blockhound/)|
 |`$LATEST_SNAPSHOT`|[![](https://img.shields.io/badge/dynamic/xml.svg?label=&color=orange&query=%2F%2Fmetadata%2Fversioning%2Flatest&url=https%3A%2F%2Frepo.spring.io%2Fsnapshot%2Fio%2Fprojectreactor%2Ftools%2Fblockhound%2Fmaven-metadata.xml)](https://repo.spring.io/snapshot/io/projectreactor/tools/blockhound/)|
 
+## JDK13+ support
+
+for JDK 13+, it is no longer allowed redefining native methods. So for the moment, as a temporary work around, please use the
+`-XX:+AllowRedefinitionToAddDeleteMethods` jvm argument:
+
+_Maven_
+
+```xml
+    <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <argLine>-XX:+AllowRedefinitionToAddDeleteMethods</argLine>
+                </configuration>
+    </plugin>
+```
+
+_Gradle_
+
+```groovy
+    tasks.withType(Test).all {
+        if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_13)) {
+            jvmArgs += [
+                "-XX:+AllowRedefinitionToAddDeleteMethods"
+            ]
+        }
+    }
+```
+
 ## Built-in integrations
 Although BlockHound supports [the SPI mechanism to integrate with](https://github.com/reactor/BlockHound/blob/master/docs/custom_integrations.md), it comes with a few built-in integrations:
 1. [Project Reactor](https://projectreactor.io)  
