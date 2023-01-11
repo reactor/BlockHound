@@ -29,6 +29,7 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.security.ProtectionDomain;
 import java.util.Map;
 
 /**
@@ -48,7 +49,8 @@ class AllowancesByteBuddyTransformer implements AgentBuilder.Transformer {
             DynamicType.Builder<?> builder,
             TypeDescription typeDescription,
             ClassLoader classLoader,
-            JavaModule module
+            JavaModule module,
+            ProtectionDomain protectionDomain
     ) {
         Map<String, Boolean> methods = allowances.get(typeDescription.getName());
 
