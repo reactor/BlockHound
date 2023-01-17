@@ -86,29 +86,24 @@ public class BlockHound {
      * @see BlockHound#builder()
      */
     public static void install(BlockHoundIntegration... integrations) {
-        builder(integrations).install();
+        builder()
+                .loadIntegrations(integrations)
+                .install();
     }
 
     /**
      * Entrypoint for installation via the {@code -javaagent=} command-line option.
      *
-     * @param args Options for the agent.
+     * @param arg Options for the agent.
      * @param instrumentation Instrumentation API.
      *
      * @see java.lang.instrument
      */
-    public static void premain(String[] args, Instrumentation instrumentation) {
-        builder().withInstrumentation(instrumentation).install();
-    }
-
-    private static Builder builder(BlockHoundIntegration... integrations) {
-        Builder builder = builder();
-        ServiceLoader<BlockHoundIntegration> serviceLoader = ServiceLoader.load(BlockHoundIntegration.class);
-        Stream
-                .concat(StreamSupport.stream(serviceLoader.spliterator(), false), Stream.of(integrations))
-                .sorted()
-                .forEach(builder::with);
-        return builder;
+    public static void premain(String arg, Instrumentation instrumentation) {
+        builder()
+                .loadIntegrations()
+                .with(instrumentation)
+                .install();
     }
 
     private BlockHound() {
@@ -270,7 +265,7 @@ public class BlockHound {
 
         private Predicate<Thread> dynamicThreadPredicate = t -> false;
 
-        private Instrumentation instrumentation;
+        private Instrumentation configuredInstrumentation;
 
         /**
          * Marks provided method of the provided class as "blocking".
@@ -407,6 +402,26 @@ public class BlockHound {
         }
 
         /**
+         * Loads integrations with {@link ServiceLoader} and adds provided integrations
+         * using {{@link #with(BlockHoundIntegration)}}.
+         * If you don't want to load the integrations using service loader, only use
+         * {@link #with(BlockHoundIntegration)} method.
+         *
+         * @param integrations an array of integrations to automatically apply on the builder using
+         * {@link #with(BlockHoundIntegration)}
+         * @return this
+         * @see BlockHound#builder()
+         */
+        public Builder loadIntegrations(BlockHoundIntegration... integrations) {
+            ServiceLoader<BlockHoundIntegration> serviceLoader = ServiceLoader.load(BlockHoundIntegration.class);
+            Stream
+                    .concat(StreamSupport.stream(serviceLoader.spliterator(), false), Stream.of(integrations))
+                    .sorted()
+                    .forEach(this::with);
+            return this;
+        }
+
+        /**
          * Applies the provided {@link BlockHoundIntegration} to the current builder
          * @param integration an integration to apply
          * @return this
@@ -422,8 +437,8 @@ public class BlockHound {
          * @param instrumentation The instrumentation instance to use.
          * @return this
          */
-        public Builder withInstrumentation(Instrumentation instrumentation) {
-            this.instrumentation = instrumentation;
+        public Builder with(Instrumentation instrumentation) {
+            this.configuredInstrumentation = instrumentation;
             return this;
         }
 
@@ -440,7 +455,8 @@ public class BlockHound {
 
             Consumer<BlockingMethod> originalOnBlockingMethod = onBlockingMethod;
             try {
-                initializeInstrumentation();
+                Instrumentation instrumentation = configuredInstrumentation == null ?
+                        ByteBuddyAgent.install() : configuredInstrumentation;
                 InstrumentationUtils.injectBootstrapClasses(
                         instrumentation,
                         BLOCK_HOUND_RUNTIME_TYPE.getInternalName(),
@@ -485,12 +501,6 @@ public class BlockHound {
 
             // Re-evaluate the current thread's state after assigning user-provided predicates
             BlockHoundRuntime.STATE.remove();
-        }
-
-        private void initializeInstrumentation() {
-            if (instrumentation == null) {
-                instrumentation = ByteBuddyAgent.install();
-            }
         }
 
         private void testInstrumentation() {
