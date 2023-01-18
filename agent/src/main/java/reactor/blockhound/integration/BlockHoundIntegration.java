@@ -37,8 +37,22 @@ public interface BlockHoundIntegration extends Comparable<BlockHoundIntegration>
      */
     void applyTo(BlockHound.Builder builder);
 
+    /**
+     * Returns the default priority level for this integration. The priority level
+     * controls the ordering of the {@link BlockHoundIntegration} plugins.
+     * Plugins which do not provide a priority are sorted using natural ordering, and
+     * their {@link #applyTo(BlockHound.Builder)} method will be called using the order
+     * in which the plugins are loaded.
+     *
+     * @return The {@link BlockHoundIntegration} plugin priority, 0 by default.
+     * @see #compareTo(BlockHoundIntegration) 
+     */
+    default int getPriority() {
+        return 0;
+    }
+
     @Override
     default int compareTo(BlockHoundIntegration o) {
-        return 0;
+        return Integer.compare(getPriority(), o.getPriority());
     }
 }
