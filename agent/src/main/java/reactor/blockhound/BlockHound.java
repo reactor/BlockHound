@@ -94,15 +94,15 @@ public class BlockHound {
     /**
      * Entrypoint for installation via the {@code -javaagent=} command-line option.
      *
-     * @param arg Options for the agent.
-     * @param instrumentation Instrumentation API.
+     * @param agentArgs Options for the agent.
+     * @param inst Instrumentation API.
      *
      * @see java.lang.instrument
      */
-    public static void premain(String arg, Instrumentation instrumentation) {
+    public static void premain(String agentArgs, Instrumentation inst) {
         builder()
                 .loadIntegrations()
-                .with(instrumentation)
+                .with(inst)
                 .install();
     }
 

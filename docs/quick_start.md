@@ -82,5 +82,12 @@ Mono.delay(Duration.ofMillis(1))
     .block(); // should throw an exception about Thread.sleep
 ```
 
+If you can't change the application code, you can also activate BlockHound using the -javaagent:<path to BlockHound agent jar> JVM option, something like this
+(you need at least version 1.0.7):
+```shell
+java -javaagent:BlockHound/agent/build/libs/agent.jar -jar my-application.jar
+```
+Notice that when using JPMS, for the moment BlockHound needs to be installed using `-javaavant` JVM option.
+
 ## What's Next?
 You can further customize Blockhound's behavior, see [customization](customization.md).
