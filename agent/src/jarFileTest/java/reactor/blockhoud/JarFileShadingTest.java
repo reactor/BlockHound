@@ -17,6 +17,7 @@
 package reactor.blockhoud;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -24,6 +25,7 @@ import org.assertj.core.api.ListAssert;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.linesOf;
 
 /**
  * This test must be executed with Gradle because it requires a shadow JAR
@@ -51,6 +53,12 @@ public class JarFileShadingTest extends AbstractJarFileTest {
 		assertThatFileList(root.resolve("META-INF").resolve("services")).containsOnly(
 				"reactor.blockhound.integration.BlockHoundIntegration"
 		);
+	}
+
+	@Test
+	public void testManifest() throws MalformedURLException {
+		assertThat(linesOf(root.resolve("META-INF/MANIFEST.MF").toUri().toURL()))
+				.anyMatch(s -> s.startsWith("Premain-Class: reactor"));
 	}
 
 	@SuppressWarnings("unchecked")
