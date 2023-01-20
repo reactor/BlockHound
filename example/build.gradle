@@ -26,7 +26,7 @@ test {
 
 configurations {
     reactor_3_3_x {
-        extendsFrom(testRuntime, testImplementation)
+        extendsFrom(testRuntimeOnly, testImplementation)
     }
 }
 
