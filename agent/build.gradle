@@ -4,7 +4,13 @@ plugins {
     id "maven-publish"
     id "signing"
     id "org.unbroken-dome.test-sets" version "4.0.0"
+    id 'me.champeau.gradle.japicmp' version '0.4.1' apply false
+    id 'de.undercouch.download' version '5.3.0' apply false    
 }
+
+import me.champeau.gradle.japicmp.JapicmpTask
+apply plugin: 'me.champeau.gradle.japicmp'
+apply plugin: 'de.undercouch.download'
 
 description = "BlockHound Java Agent"
 ext.detailedDescription = "Java agent to detect blocking calls from non-blocking threads."
@@ -88,3 +94,86 @@ publishing {
         }
     }
 }
+
+task downloadBaseline(type: Download) {
+	onlyIf {
+		if (project.gradle.startParameter.isOffline()) {
+			println "Offline: skipping downloading of baseline and JAPICMP"
+			return false
+		}
+		else if ("$compatibleVersion" == "SKIP") {
+			println "SKIP: Instructed to skip the baseline comparison"
+			return false
+		}
+		else {
+			println "Will download and perform baseline comparison with ${compatibleVersion}"
+			return true
+		}
+	}
+
+	onlyIfNewer true
+	compress true
+	src "${repositories.mavenCentral().url}io/projectreactor/tools/blockhound/$compatibleVersion/blockhound-${compatibleVersion}.jar"
+	dest "${buildDir}/baselineLibs/blockhound-${compatibleVersion}.jar"
+}
+
+def japicmpReport = tasks.register('japicmpReport') {
+	onlyIf {
+		japicmp.state.failure != null
+	}
+	doLast {
+		def reportFile = file("${project.buildDir}/reports/japi.txt")
+		if (reportFile.exists()) {
+			println "\n **********************************"
+			println " * /!\\ API compatibility failures *"
+			println " **********************************"
+			println "Japicmp report was filtered and interpreted to find the following incompatibilities:"
+			reportFile.eachLine {
+				if (it.contains("*") && (!it.contains("***") || it.contains("****")))
+					println "source incompatible change: $it"
+				else if (it.contains("!"))
+					println "binary incompatible change: $it"
+			}
+		}
+		else println "No incompatible change to report"
+	}
+}
+
+task japicmp(type: JapicmpTask) {
+	finalizedBy(japicmpReport)
+	dependsOn(shadowJar)
+	onlyIf { "$compatibleVersion" != "SKIP" }
+
+	oldClasspath.from(files("${buildDir}/baselineLibs/blockhound-${compatibleVersion}.jar"))
+	newClasspath.from(files(jar.archiveFile))
+	// these onlyXxx parameters result in a report that is slightly too noisy, but better than
+	// onlyBinaryIncompatibleModified = true which masks source-incompatible-only changes
+	onlyBinaryIncompatibleModified = false
+	onlyModified = true
+	failOnModification = true
+	failOnSourceIncompatibility = true
+	txtOutputFile = file("${project.buildDir}/reports/japi.txt")
+	ignoreMissingClasses = true
+	includeSynthetic = true
+
+	compatibilityChangeExcludes = [ "METHOD_NEW_DEFAULT" ]
+
+	packageExcludes = [
+			// Always ignore shaded packages
+			'reactor.blockhound.shaded.*'
+	]
+
+	classExcludes = [
+			// Ignores this transformer which is used internally
+			'reactor.blockhound.AllowancesByteBuddyTransformer$AllowedArgument$Factory',
+			// Ignores this transformer which is used internally
+			'reactor.blockhound.BlockingCallsByteBuddyTransformer$ModifiersArgument$Factory'
+	]
+
+	methodExcludes = [
+	]
+}
+
+tasks.japicmp.dependsOn(downloadBaseline)
+
+tasks.check.dependsOn(japicmp)
