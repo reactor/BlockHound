@@ -141,6 +141,7 @@ def japicmpReport = tasks.register('japicmpReport') {
 
 task japicmp(type: JapicmpTask) {
 	finalizedBy(japicmpReport)
+	dependsOn(shadowJar)
 	onlyIf { "$compatibleVersion" != "SKIP" }
 
 	oldClasspath.from(files("${buildDir}/baselineLibs/blockhound-${compatibleVersion}.jar"))
