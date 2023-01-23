@@ -8,7 +8,7 @@ Otherwise, you may get false positives due to the incorrectly installed agent (o
 The simpliest test using Project Reactor would look like this:
 ```java
 @Test
-public void blockHoundWorks() {
+public void blockHoundWorks() throws TimeoutException, InterruptedException {
     try {
         FutureTask<?> task = new FutureTask<>(() -> {
             Thread.sleep(0);
