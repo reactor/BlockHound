@@ -16,9 +16,11 @@
 
 package reactor.blockhound;
 
+import java.io.Serializable;
+
 import static net.bytebuddy.jar.asm.Opcodes.ACC_STATIC;
 
-public class BlockingMethod {
+public class BlockingMethod implements Serializable {
 
     private final String className;
 
