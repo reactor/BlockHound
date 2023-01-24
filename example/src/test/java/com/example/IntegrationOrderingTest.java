@@ -39,8 +39,8 @@ public class IntegrationOrderingTest {
     public static final class First implements BlockHoundIntegration {
 
         public First() {
-            System.out.println("Creating First");
         }
+
         @Override
         public int getPriority() {
             return -1;
