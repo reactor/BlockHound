@@ -54,6 +54,60 @@ _Gradle_
     }
 ```
 
+## Using Tomcat
+
+When using BlockHound from a Tomcat webapp, do not embedd blockhound dependency within your webapp. Instead of that, just drop
+the blockhound jar in the Tomcat shared "lib" directory.
+If you are using `Cargo` maven plugin, this can be done using a [shared classpath](https://codehaus-cargo.github.io/cargo/Application+Classpath.html) 
+
+Here is an example using Cargo maven plugin:
+
+````xml
+    <dependencies>
+        <dependency>
+            <groupId>io.projectreactor.tools</groupId>
+            <artifactId>blockhound</artifactId>
+            <version>(latest blockhound version)</version>
+            <scope>provided</scope>
+        </dependency>
+        ...
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.cargo</groupId>
+                <artifactId>cargo-maven3-plugin</artifactId>
+                <version>1.10.4</version>
+                <configuration>
+                    <container>
+                        <containerId>tomcat9x</containerId>
+                        <type>embedded</type>
+                        <dependencies>
+                            <dependency>
+                                <groupId>io.projectreactor.tools</groupId>
+                                <artifactId>blockhound</artifactId>
+                                <classpath>shared</classpath>
+                            </dependency>
+                        </dependencies>
+                    </container>
+                    <deployables>
+                        <deployable>
+                            <type>war</type>
+                            <location>${project.build.directory}/${project.build.finalName}.war</location>
+                            <properties>
+                                <context>/</context>
+                            </properties>
+                        </deployable>
+                    </deployables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    ...
+````
+
+
 ## Installation
 BlockHound is a JVM agent. You need to "install" it before it starts detecting the issues:
 ```java
