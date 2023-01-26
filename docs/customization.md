@@ -40,6 +40,49 @@ builder.disallowBlockingCallsInside(
 );
 ```
 
+Example using Allow/Disalow
+
+The below example demonstrates how to allow the `NonBlockingClass.outer()` method to block, but not
+the `NonBlockingClass.inner()` method, which is called by the `outer()` method:
+
+```java
+public class BlockingDisallowTest {
+
+    static {
+        BlockHound.install(b -> b
+                .allowBlockingCallsInside(NonBlockingClass.class.getName(), "outer")
+                .disallowBlockingCallsInside(NonBlockingClass.class.getName(), "inner")
+        );
+    }
+
+    static class NonBlockingClass {
+
+        String inner() {
+            try {
+                //if this trips BlockHound, the test fails (inner not in the stacktrace)
+                Thread.sleep(50);
+            }
+            catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return "example";
+        }
+
+        String outer() {
+            try {
+                Thread.sleep(50);
+            }
+            catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            Thread.yield();
+            return inner();
+        }
+    }
+```
+The `NonBlockingClass.outer()` method is allowed to block and all the methods called down the stack, except the `inner()` method 
+which is called by the `outer()` method.
+
 ## Custom blocking method callback
 * `Builder#blockingMethodCallback(Consumer<BlockingMethod> consumer)`
 
