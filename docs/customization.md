@@ -43,7 +43,7 @@ builder.disallowBlockingCallsInside(
 Example using Allow/Disalow
 
 The below example demonstrates how to allow the `NonBlockingClass.outer()` method to block, but not
-the `NonBlockingClass.inner()` method`, which is called by the `outer()` method:
+the `NonBlockingClass.inner()` method, which is called by the `outer()` method:
 
 ```java
 public class BlockingDisallowTest {
