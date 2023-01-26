@@ -21,7 +21,7 @@ jobs:
     needs: checkSnapshot
     environment: snapshot
     env: #change this after a release
-      BLOCKHOUND_VERSION: 1.0.7.BUILD-SNAPSHOT
+      BLOCKHOUND_VERSION: 1.0.8.BUILD-SNAPSHOT
     steps:
       - name: check version
         if: ${{ !endsWith(env.BLOCKHOUND_VERSION, '.BUILD-SNAPSHOT') }}
