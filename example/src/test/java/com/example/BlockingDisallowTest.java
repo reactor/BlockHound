@@ -55,7 +55,7 @@ public class BlockingDisallowTest {
 
         latch.await(5, TimeUnit.SECONDS);
 
-        //given the configuration we expect that yield is allowed, but the sleep inside example2 isn't
+        //given the configuration we expect that Thread.yield() is allowed, but Thread.sleep() inside inner() isn't
         assertThat(boeRef.get())
                 .isNotNull()
                 .hasMessage("Blocking call! java.lang.Thread.sleep")
