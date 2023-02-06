@@ -62,7 +62,7 @@ dependencies {
     compileOnly 'com.google.auto.service:auto-service-annotations:1.0.1'
     annotationProcessor 'com.google.auto.service:auto-service:1.0'
 
-    implementation 'net.bytebuddy:byte-buddy:1.12.22'    
+    implementation 'net.bytebuddy:byte-buddy:1.12.23'    
     implementation 'net.bytebuddy:byte-buddy-agent:1.12.22'
 
     compileOnly 'io.projectreactor:reactor-core:3.2.5.RELEASE'
