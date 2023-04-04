@@ -42,11 +42,11 @@ check.dependsOn(testReactor3_3_x)
 
 dependencies {
     testImplementation project(path: ":agent", configuration: 'shadow')
-    testImplementation 'io.projectreactor:reactor-core:3.2.2.RELEASE'
+    testImplementation 'io.projectreactor:reactor-core:3.2.5.RELEASE'
     testImplementation 'io.reactivex.rxjava2:rxjava:2.2.18'
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.assertj:assertj-core:3.24.2'
 
-    reactor_3_3_x 'io.projectreactor:reactor-core:3.3.0.RC1'
+    reactor_3_3_x 'io.projectreactor:reactor-core:3.2.5.RELEASE'
 }
