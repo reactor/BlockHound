@@ -54,6 +54,24 @@ dependencies {
 }
 ```
 
+<details>
+<summary>with Kotlin DSL</summary>
+
+```kotlin
+repositories {
+    mavenCentral()
+    // maven("https://repo.spring.io/milestone")
+    // maven("https://repo.spring.io/snapshot")
+}
+
+dependencies {
+    testImplementation("io.projectreactor.tools:blockhound:$LATEST_RELEASE")
+    // testImplementation("io.projectreactor.tools:blockhound:$LATEST_MILESTONE")
+    // testImplementation("io.projectreactor.tools:blockhound:$LATEST_SNAPSHOT")
+}
+```
+</details>
+
 _Maven_
 
 ```xml
@@ -103,6 +121,18 @@ _Gradle_
         }
     }
 ```
+
+<details>
+<summary>with Kotlin DSL</summary>
+
+```kotlin
+tasks.withType<Test>().all {
+    if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_13)) {
+        jvmArgs("-XX:+AllowRedefinitionToAddDeleteMethods")
+    }
+}
+```
+</details>
 
 ## Built-in integrations
 Although BlockHound supports [the SPI mechanism to integrate with](https://github.com/reactor/BlockHound/blob/master/docs/custom_integrations.md), it comes with a few built-in integrations:
