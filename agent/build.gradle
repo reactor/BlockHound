@@ -68,7 +68,7 @@ dependencies {
     compileOnly 'io.projectreactor:reactor-core:3.2.5.RELEASE'
     compileOnly 'io.reactivex.rxjava2:rxjava:2.2.18'
 
-    jarFileTestImplementation 'org.assertj:assertj-core:3.24.2'
+    jarFileTestImplementation 'org.assertj:assertj-core:3.25.0'
     jarFileTestImplementation 'junit:junit:4.13.2'
 }
 

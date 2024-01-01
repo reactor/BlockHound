@@ -29,7 +29,7 @@ dependencies {
 
     compileOnly 'org.junit.platform:junit-platform-launcher:1.0.0'
 
-    testImplementation 'org.assertj:assertj-core:3.24.2'
+    testImplementation 'org.assertj:assertj-core:3.25.0'
     testImplementation 'io.projectreactor:reactor-core:3.2.5.RELEASE'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.0'
