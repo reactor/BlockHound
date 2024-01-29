@@ -36,6 +36,14 @@ class NativeWrappingClassFileTransformer implements ClassFileTransformer {
 
     private final Map<String, Map<String, Set<String>>> blockingMethods;
 
+    public static final boolean IS_JDK_18_OR_NEWER;
+
+    static {
+        String javaVersion = System.getProperty("java.specification.version");
+        double version = Double.parseDouble(javaVersion);
+        IS_JDK_18_OR_NEWER = version >= 18.0;
+    }
+
     NativeWrappingClassFileTransformer(final Map<String, Map<String, Set<String>>> blockingMethods) {
         this.blockingMethods = blockingMethods;
     }
@@ -105,6 +113,14 @@ class NativeWrappingClassFileTransformer implements ClassFileTransformer {
             delegatingMethodVisitor.visitCode();
 
             return new MethodVisitor(ASM7, delegatingMethodVisitor) {
+                @Override
+                public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                    // See #392
+                    if (IS_JDK_18_OR_NEWER && descriptor.equals("Ljdk/internal/vm/annotation/IntrinsicCandidate;")) {
+                        return null; // remove the intrinsic annotation
+                    }
+                    return super.visitAnnotation(descriptor, visible);
+                }
 
                 @Override
                 public void visitEnd() {
