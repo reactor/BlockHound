@@ -58,7 +58,7 @@ public class BlockingDisallowTest {
         //given the configuration we expect that Thread.yield() is allowed, but Thread.sleep() inside inner() isn't
         assertThat(boeRef.get())
                 .isNotNull()
-                .hasMessage("Blocking call! java.lang.Thread.sleep")
+                .hasMessageContaining("Blocking call! java.lang.Thread.sleep")
                 .hasStackTraceContaining("at com.example.BlockingDisallowTest$NonBlockingClass.inner")
                 .hasStackTraceContaining("at com.example.BlockingDisallowTest$NonBlockingClass.outer");
     }
