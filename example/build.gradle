@@ -46,7 +46,7 @@ dependencies {
     testImplementation 'io.reactivex.rxjava2:rxjava:2.2.18'
 
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'org.assertj:assertj-core:3.25.2'
+    testImplementation 'org.assertj:assertj-core:3.25.3'
 
     reactor_3_3_x 'io.projectreactor:reactor-core:3.2.5.RELEASE'
 }
