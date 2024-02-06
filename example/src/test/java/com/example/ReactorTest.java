@@ -124,14 +124,14 @@ public class ReactorTest {
             });
         });
 
-        tests.put("java.lang.Thread.sleep", () -> {
+        tests.put("java.lang.Thread." + (version.feature() >= 19 ? "sleep0" : "sleep"), () -> {
             return Mono.fromCallable(() -> {
                 Thread.sleep(10);
                 return "";
             });
         });
 
-        tests.put("java.lang.Thread.yield", () -> {
+        tests.put("java.lang.Thread." + (version.feature() >= 19 ? "yield0" : "yield"), () -> {
             return Mono.fromCallable(() -> {
                 Thread.yield();
                 return "";

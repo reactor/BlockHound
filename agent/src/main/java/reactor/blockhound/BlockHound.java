@@ -134,12 +134,6 @@ public class BlockHound {
     public static class Builder {
 
         private final Map<String, Map<String, Set<String>>> blockingMethods = new HashMap<String, Map<String, Set<String>>>() {{
-            put("java/lang/Thread", new HashMap<String, Set<String>>() {{
-                put("sleep", singleton("(J)V"));
-                put("yield", singleton("()V"));
-                put("onSpinWait", singleton("()V"));
-            }});
-
             put("java/lang/Object", new HashMap<String, Set<String>>() {{
                 put("wait", singleton("(J)V"));
             }});
@@ -217,6 +211,23 @@ public class BlockHound {
                 }});
                 put("java/lang/UNIXProcess", new HashMap<String, Set<String>>() {{
                     put("forkAndExec", singleton("(I[B[B[BI[BI[B[IZ)I"));
+                }});
+            }
+
+            try {
+                // Check if Java 19+
+                Class.forName("java.lang.WrongThreadException");
+
+                put("java/lang/Thread", new HashMap<String, Set<String>>() {{
+                    put("sleep0", singleton("(J)V"));
+                    put("yield0", singleton("()V"));
+                    put("onSpinWait", singleton("()V"));
+                }});
+            } catch (ClassNotFoundException __) {
+                put("java/lang/Thread", new HashMap<String, Set<String>>() {{
+                    put("sleep", singleton("(J)V"));
+                    put("yield", singleton("()V"));
+                    put("onSpinWait", singleton("()V"));
                 }});
             }
         }};
