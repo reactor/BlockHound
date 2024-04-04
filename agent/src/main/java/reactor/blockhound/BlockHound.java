@@ -134,6 +134,8 @@ public class BlockHound {
     public static class Builder {
 
         private final Map<String, Map<String, Set<String>>> blockingMethods = new HashMap<String, Map<String, Set<String>>>() {{
+            int jdkMajorVersion = InstrumentationUtils.getJdkMajorVersion();
+
             put("java/lang/Object", new HashMap<String, Set<String>>() {{
                 put("wait", singleton("(J)V"));
             }});
@@ -194,10 +196,7 @@ public class BlockHound {
                 put("writeBytes", singleton("([BIIZ)V"));
             }});
 
-            try {
-                // Check if Java 9+
-                Class.forName("java.lang.StackWalker");
-
+            if (jdkMajorVersion >= 9) {
                 put("jdk/internal/misc/Unsafe", new HashMap<String, Set<String>>() {{
                     put("park", singleton("(ZJ)V"));
                 }});
@@ -205,7 +204,7 @@ public class BlockHound {
                     put("forkAndExec", singleton("(I[B[B[BI[BI[B[IZ)I"));
                 }});
             }
-            catch (ClassNotFoundException __) {
+            else {
                 put("sun/misc/Unsafe", new HashMap<String, Set<String>>() {{
                     put("park", singleton("(ZJ)V"));
                 }});
@@ -214,19 +213,27 @@ public class BlockHound {
                 }});
             }
 
-            try {
-                // Check if Java 19+
-                Class.forName("java.lang.WrongThreadException");
-
+            if (jdkMajorVersion < 19) {
+                // for jdk version < 19, the native method for Thread.sleep is "sleep"
+                put("java/lang/Thread", new HashMap<String, Set<String>>() {{
+                    put("sleep", singleton("(J)V"));
+                    put("yield", singleton("()V"));
+                    put("onSpinWait", singleton("()V"));
+                }});
+            }
+            else if (jdkMajorVersion >= 19 && jdkMajorVersion <= 21) {
+                // for jdk version in the range [19, 21], the native method for Thread.sleep is "sleep0"
                 put("java/lang/Thread", new HashMap<String, Set<String>>() {{
                     put("sleep0", singleton("(J)V"));
                     put("yield0", singleton("()V"));
                     put("onSpinWait", singleton("()V"));
                 }});
-            } catch (ClassNotFoundException __) {
+            }
+            else {
+                // for jdk version >= 22, the native method for Thread.sleep is "sleepNanos0"
                 put("java/lang/Thread", new HashMap<String, Set<String>>() {{
-                    put("sleep", singleton("(J)V"));
-                    put("yield", singleton("()V"));
+                    put("sleepNanos0", singleton("(J)V"));
+                    put("yield0", singleton("()V"));
                     put("onSpinWait", singleton("()V"));
                 }});
             }
