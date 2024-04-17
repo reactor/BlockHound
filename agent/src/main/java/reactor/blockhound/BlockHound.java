@@ -134,8 +134,6 @@ public class BlockHound {
     public static class Builder {
 
         private final Map<String, Map<String, Set<String>>> blockingMethods = new HashMap<String, Map<String, Set<String>>>() {{
-            int jdkMajorVersion = InstrumentationUtils.getJdkMajorVersion();
-
             put("java/lang/Object", new HashMap<String, Set<String>>() {{
                 put("wait", singleton("(J)V"));
             }});
@@ -196,7 +194,7 @@ public class BlockHound {
                 put("writeBytes", singleton("([BIIZ)V"));
             }});
 
-            if (jdkMajorVersion >= 9) {
+            if (InstrumentationUtils.jdkMajorVersion >= 9) {
                 put("jdk/internal/misc/Unsafe", new HashMap<String, Set<String>>() {{
                     put("park", singleton("(ZJ)V"));
                 }});
@@ -213,7 +211,7 @@ public class BlockHound {
                 }});
             }
 
-            if (jdkMajorVersion < 19) {
+            if (InstrumentationUtils.jdkMajorVersion < 19) {
                 // for jdk version < 19, the native method for Thread.sleep is "sleep"
                 put("java/lang/Thread", new HashMap<String, Set<String>>() {{
                     put("sleep", singleton("(J)V"));
@@ -221,7 +219,7 @@ public class BlockHound {
                     put("onSpinWait", singleton("()V"));
                 }});
             }
-            else if (jdkMajorVersion >= 19 && jdkMajorVersion <= 21) {
+            else if (InstrumentationUtils.jdkMajorVersion >= 19 && InstrumentationUtils.jdkMajorVersion <= 21) {
                 // for jdk version in the range [19, 21], the native method for Thread.sleep is "sleep0"
                 put("java/lang/Thread", new HashMap<String, Set<String>>() {{
                     put("sleep0", singleton("(J)V"));
