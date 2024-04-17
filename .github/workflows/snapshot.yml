@@ -9,11 +9,12 @@ jobs:
   checkSnapshot:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Set up JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
         with:
-          java-version: 13 # Modern JVM is needed for Java 10+ specific tests
+          java-version: '13' # Modern JVM is needed for Java 10+ specific tests
+          distribution: 'adopt'
       - name: Run tests and javadoc
         run: ./gradlew check javadoc
   publishSnapshot:
@@ -28,11 +29,12 @@ jobs:
         run: |
           echo "::error ::$BLOCKHOUND_VERSION is not following the x.y.z.BUILD-SNAPSHOT format"
           exit 1
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
       - name: Set up JDK
-        uses: actions/setup-java@v1
+        uses: actions/setup-java@99b8673ff64fbf99d8d325f52d9a5bdedb8483e9 # v4.2.1
         with:
-          java-version: 8
+          java-version: '8'
+          distribution: 'temurin'
       - name: Publish Snapshot
         run: ./gradlew --no-daemon -Pversion=$BLOCKHOUND_VERSION publish
         env:
