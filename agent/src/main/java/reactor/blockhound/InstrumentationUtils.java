@@ -34,6 +34,20 @@ import java.util.zip.ZipOutputStream;
 
 class InstrumentationUtils {
 
+    /**
+     * Constant used to indicate the current JDK major version (8,9,..22,...)
+     */
+    static final int jdkMajorVersion;
+
+    static {
+        try {
+            jdkMajorVersion = getJdkMajorVersion();
+        }
+        catch (InvocationTargetException | IllegalAccessException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
+
     static void injectBootstrapClasses(Instrumentation instrumentation, String... classNames) throws IOException {
         File tempJarFile = File.createTempFile("BlockHound", ".jar");
         tempJarFile.deleteOnExit();
@@ -83,7 +97,7 @@ class InstrumentationUtils {
      *
      * @return the current jdk major version (8, 9, 10, ... 22)
      */
-    static int getJdkMajorVersion() {
+    private static int getJdkMajorVersion() throws InvocationTargetException, IllegalAccessException {
         Object version = getRuntimeVersion();
 
         if (version == null) {
@@ -98,7 +112,7 @@ class InstrumentationUtils {
      *
      * @return the detected JDK version object or null if not available
      */
-    private static Object getRuntimeVersion() {
+    private static Object getRuntimeVersion() throws InvocationTargetException, IllegalAccessException {
         Runtime runtime = Runtime.getRuntime();
         try {
             Method versionMethod = runtime.getClass().getMethod("version");
@@ -109,11 +123,6 @@ class InstrumentationUtils {
             // Method Runtime.version() not found -> return null, meaning JDK 8
             return null; // JDK 8
         }
-
-        catch (IllegalAccessException | InvocationTargetException e) {
-            // if the Runtime.version() method exists, we should be able to invoke it, consider this is an error state
-            throw new IllegalStateException("Could not invoke Runtime.version() method", e);
-        }
     }
 
     /**
@@ -122,7 +131,7 @@ class InstrumentationUtils {
      * @param version the JDK version object
      * @return the major version (9, 10, ...)
      */
-    private static int getRuntimeVersionFeature(Object version) {
+    private static int getRuntimeVersionFeature(Object version) throws InvocationTargetException, IllegalAccessException {
         try {
             Method featureMethod = version.getClass().getMethod("feature");
             Object feature = featureMethod.invoke(version);
@@ -132,11 +141,6 @@ class InstrumentationUtils {
         catch (NoSuchMethodException e) {
             // Version.feature() method not found -> JDK 9 (because feature method is only available starting from JDK10 +)
             return 9;
-        }
-
-        catch (IllegalAccessException | InvocationTargetException e) {
-            // if the Runtime.version().feature() method exists, we should be able to invoke it, consider this is an error state
-            throw new IllegalStateException("Could not invoke Runtime.version().feature() method", e);
         }
     }
 
