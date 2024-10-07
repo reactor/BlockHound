@@ -33,7 +33,7 @@ dependencies {
     testImplementation 'io.projectreactor:reactor-core:3.2.5.RELEASE'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.2'
 
 
     // FIXME remove once https://github.com/gradle/gradle/issues/8806 is fixed
