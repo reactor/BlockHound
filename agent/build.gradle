@@ -32,7 +32,7 @@ shadowJar {
         attributes('Premain-Class': 'reactor.blockhound.BlockHound')
     }
 
-    exclude 'META-INF/versions/9/module-info.class'
+    exclude 'META-INF/versions/**'
     exclude 'META-INF/LICENSE'
     exclude 'META-INF/NOTICE'
     exclude 'META-INF/licenses/'
