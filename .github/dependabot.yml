@@ -6,7 +6,7 @@ updates:
     interval: daily
   open-pull-requests-limit: 10
   assignees:
-  - simonbasle
+  - violetagg
   labels:
   - type/dependency-upgrade
   ignore:
@@ -31,4 +31,14 @@ updates:
   - dependency-name: net.bytebuddy:byte-buddy
     versions:
     - 1.10.20
+  rebase-strategy: disabled
+- package-ecosystem: github-actions
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  assignees:
+  - violetagg
+  labels:
+  - type/dependency-upgrade
   rebase-strategy: disabled
