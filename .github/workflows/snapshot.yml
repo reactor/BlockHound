@@ -7,7 +7,7 @@ on:
 
 jobs:
   checkSnapshot:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up JDK
@@ -18,7 +18,7 @@ jobs:
       - name: Run tests and javadoc
         run: ./gradlew check javadoc
   publishSnapshot:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: checkSnapshot
     environment: snapshot
     env: #change this after a release
