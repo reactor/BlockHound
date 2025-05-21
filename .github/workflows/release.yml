@@ -38,9 +38,10 @@ jobs:
           GRADLE_PUBLISH_MAVEN_PASSWORD: ${{secrets.MAVEN_PASSWORD}}
         run: |
           GRADLE_PUBLISH_MAVEN_AUTHORIZATION=$(echo "${GRADLE_PUBLISH_MAVEN_USER}:${GRADLE_PUBLISH_MAVEN_PASSWORD}" | base64)
-          curl -X 'POST' \
-          'https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/io.projectreactor?publishing_type=user_managed' \
-          -H 'accept: */*' \
-          -H 'Authorization: Bearer ${GRADLE_PUBLISH_MAVEN_AUTHORIZATION}' \
-          -d ''
- 
+          REPOSITORY_RESPONSE=$(curl -s -X GET \
+          -H "Authorization: Bearer ${GRADLE_PUBLISH_MAVEN_AUTHORIZATION}" \
+          "https://ossrh-staging-api.central.sonatype.com/manual/search/repositories?state=open")
+          REPOSITORY_KEY=$(echo "${REPOSITORY_RESPONSE}" | grep -o '"key":"[^"]*"' | head -1 | cut -d':' -f2 | tr -d '"')
+          curl -s -X POST \
+          -H "Authorization: Bearer ${GRADLE_PUBLISH_MAVEN_AUTHORIZATION}" \
+          "https://ossrh-staging-api.central.sonatype.com/manual/upload/repository/${REPOSITORY_KEY}?publishing_type=user_managed"
