@@ -31,3 +31,16 @@ jobs:
           GRADLE_PUBLISH_REPO_URL: https://repo.spring.io/libs-milestone-local/
           GRADLE_PUBLISH_MAVEN_USER: ${{secrets.ARTIFACTORY_USERNAME}}
           GRADLE_PUBLISH_MAVEN_PASSWORD: ${{secrets.ARTIFACTORY_PASSWORD}}
+      - name: Stage the release
+        if: endsWith(github.event.release.tag_name, '.RELEASE')
+        env:
+          GRADLE_PUBLISH_MAVEN_USER: ${{secrets.MAVEN_USER}}
+          GRADLE_PUBLISH_MAVEN_PASSWORD: ${{secrets.MAVEN_PASSWORD}}
+        run: |
+          GRADLE_PUBLISH_MAVEN_AUTHORIZATION=$(echo "${GRADLE_PUBLISH_MAVEN_USER}:${GRADLE_PUBLISH_MAVEN_PASSWORD}" | base64)
+          curl -X 'POST' \
+          'https://ossrh-staging-api.central.sonatype.com/manual/upload/defaultRepository/io.projectreactor?publishing_type=user_managed' \
+          -H 'accept: */*' \ 
+          -H 'Authorization: Bearer ${GRADLE_PUBLISH_MAVEN_AUTHORIZATION}' \ 
+          -d ''
+ 
