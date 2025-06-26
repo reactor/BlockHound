@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018-2019 Pivotal Software Inc, All Rights Reserved.
+ * Copyright (c) 2018-2025 Pivotal Software Inc, All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -219,7 +219,7 @@ public class BlockHound {
                     put("onSpinWait", singleton("()V"));
                 }});
             }
-            else if (InstrumentationUtils.jdkMajorVersion >= 19 && InstrumentationUtils.jdkMajorVersion <= 21) {
+            else if (InstrumentationUtils.jdkMajorVersion <= 21) {
                 // for jdk version in the range [19, 21], the native method for Thread.sleep is "sleep0"
                 put("java/lang/Thread", new HashMap<String, Set<String>>() {{
                     put("sleep0", singleton("(J)V"));
