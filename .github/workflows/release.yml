@@ -4,6 +4,8 @@ on:
   release: #note: fortunately this event is not triggered for draft releases, as `released` could include drafts
     types: [ prereleased, released ]
 
+permissions: {}
+
 jobs:
   publishRelease:
     runs-on: ubuntu-22.04
