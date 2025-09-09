@@ -48,6 +48,7 @@ public class JarFileShadingTest extends AbstractJarFileTest {
 	public void testMetaInf() throws Exception {
 		assertThatFileList(root.resolve("META-INF")).containsOnly(
 				"MANIFEST.MF",
+				"LICENSE",
 				"services"
 		);
 		assertThatFileList(root.resolve("META-INF").resolve("services")).containsOnly(

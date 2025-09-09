@@ -24,6 +24,11 @@ sourceCompatibility = targetCompatibility = 8
 shadowJar {
     classifier = null
 
+    from("${rootDir}/docs/src/docs/dist") {
+        include "LICENSE"
+        into "META-INF"
+    }
+
     manifest {
         attributes('Can-Retransform-Classes': 'true')
         attributes('Can-Set-Native-Method-Prefix': 'true')
@@ -33,7 +38,6 @@ shadowJar {
     }
 
     exclude 'META-INF/versions/**'
-    exclude 'META-INF/LICENSE'
     exclude 'META-INF/NOTICE'
     exclude 'META-INF/licenses/'
     exclude 'META-INF/maven/**'
@@ -75,11 +79,26 @@ dependencies {
 task sourcesJar(type: Jar) {
     archiveClassifier.set('sources')
     from sourceSets.main.allJava
+    from("${rootDir}/docs/src/docs/dist") {
+        include "LICENSE"
+        into "META-INF"
+    }
 }
 
 task javadocJar(type: Jar) {
     from javadoc
     archiveClassifier.set('javadoc')
+    from("${rootDir}/docs/src/docs/dist") {
+        include "LICENSE"
+        into "META-INF"
+    }
+}
+
+jar {
+    from("${rootDir}/docs/src/docs/dist") {
+        include "LICENSE"
+        into "META-INF"
+    }
 }
 
 publishing {
