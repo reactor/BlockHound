@@ -31,6 +31,10 @@ updates:
   - dependency-name: net.bytebuddy:byte-buddy
     versions:
     - 1.10.20
+  # Versions > 5 require JDK17+
+  - dependency-name: org.junit.jupiter:*
+    versions:
+    - "[6.a, 7]"
   rebase-strategy: disabled
 - package-ecosystem: github-actions
   directory: "/"
