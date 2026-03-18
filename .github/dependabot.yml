@@ -16,28 +16,13 @@ updates:
   - dependency-name: io.reactivex.rxjava2:rxjava
     versions:
     - "> 2.2.18, < 2.3"
-  - dependency-name: me.champeau.gradle.jmh
-    versions:
-    - ">= 0.5.a, < 0.6"
   - dependency-name: org.junit.platform:junit-platform-launcher
     versions:
     - "> 1.0.0"
-  - dependency-name: io.projectreactor.tools:blockhound
-    versions:
-    - 1.0.5.RELEASE
-  - dependency-name: net.bytebuddy:byte-buddy-agent
-    versions:
-    - 1.10.20
-  - dependency-name: net.bytebuddy:byte-buddy
-    versions:
-    - 1.10.20
   # Versions > 5 require JDK17+
   - dependency-name: org.junit.jupiter:*
     versions:
     - "[6.a, 7]"
-  - dependency-name: gradle-wrapper
-    versions:
-    - "[7.6.a, 10]"
   rebase-strategy: disabled
 - package-ecosystem: github-actions
   directory: "/"
