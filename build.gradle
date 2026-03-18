@@ -8,12 +8,12 @@ subprojects {
     }
 
     tasks.withType(Test).configureEach {
-        def javaMajorVersion = System.getProperty("java.version").split("\\.", 2)[0].toInteger()
-        if (javaMajorVersion >= 13) {
-            jvmArgs += [
-                    "-XX:+AllowRedefinitionToAddDeleteMethods"
-            ]
+        javaLauncher = javaToolchains.launcherFor {
+            languageVersion = JavaLanguageVersion.of(13)
         }
+        jvmArgs += [
+                "-XX:+AllowRedefinitionToAddDeleteMethods"
+        ]
     }
 
 
