@@ -7,7 +7,14 @@ plugins {
 description = "BlockHound JUnit Platform Integration"
 ext.detailedDescription = "Integrates the BlockHound Java agent to detect blocking calls in JUnit Platform-based tests."
 
-sourceCompatibility = targetCompatibility = 8
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+compileJava {
+    options.release = 8
+}
 
 repositories {
     mavenCentral()
@@ -25,7 +32,7 @@ dependencies {
     annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
 
     //the api configuration ensures we publish blockhound at compile scope in pom
-    api project(path: ":agent", configuration: 'shadow')
+    api project(":agent")
 
     compileOnly 'org.junit.platform:junit-platform-launcher:1.0.0'
 
@@ -75,7 +82,7 @@ publishing {
             artifact sourcesJar
             artifact javadocJar
 
-            artifactId 'blockhound-junit-platform'
+            artifactId = 'blockhound-junit-platform'
         }
     }
 }

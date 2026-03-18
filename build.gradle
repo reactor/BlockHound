@@ -7,13 +7,13 @@ subprojects {
         mavenCentral()
     }
 
-    tasks.withType(Test).all {
-        def javaMajorVersion = System.getProperty("java.version").split("\\.", 2)[0].toInteger()
-        if (javaMajorVersion >= 13) {
-            jvmArgs += [
-                    "-XX:+AllowRedefinitionToAddDeleteMethods"
-            ]
+    tasks.withType(Test).configureEach {
+        javaLauncher = javaToolchains.launcherFor {
+            languageVersion = JavaLanguageVersion.of(13)
         }
+        jvmArgs += [
+                "-XX:+AllowRedefinitionToAddDeleteMethods"
+        ]
     }
 
 
@@ -22,7 +22,7 @@ subprojects {
         //This works because the version is only defined by CI scripts, and only the release one should use .RELEASE suffix
         def shouldSign = version.toString().endsWith(".RELEASE")
         project.signing {
-            required { shouldSign }
+            required = { shouldSign }
 
             //skip the configuration entirely if !shouldSign. the task shouldn't even be available
             if (shouldSign) {
@@ -41,7 +41,7 @@ subprojects {
         project.publishing {
             repositories {
                 maven {
-                    url System.getenv('GRADLE_PUBLISH_REPO_URL')
+                    url = System.getenv('GRADLE_PUBLISH_REPO_URL')
                     credentials {
                         username = System.getenv('GRADLE_PUBLISH_MAVEN_USER')
                         password = System.getenv('GRADLE_PUBLISH_MAVEN_PASSWORD')
@@ -51,7 +51,7 @@ subprojects {
         }
     }
 
-    tasks.withType(GenerateModuleMetadata) {
+    tasks.withType(GenerateModuleMetadata).configureEach {
         enabled = false
     }
 }

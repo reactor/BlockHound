@@ -1,22 +1,25 @@
 plugins {
     id "java"
-    id "me.champeau.gradle.jmh" version "0.5.3"
+    id "me.champeau.jmh" version "0.7.3"
 }
 
-sourceCompatibility = targetCompatibility = 8
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
 
 repositories {
-    maven { url 'https://repo.spring.io/libs-milestone' }
+    maven { url = 'https://repo.spring.io/libs-milestone' }
 }
 
 jmh {
-    jmhVersion = '1.23'
-    duplicateClassesStrategy DuplicatesStrategy.INCLUDE
+    jmhVersion = '1.37'
+    duplicateClassesStrategy = DuplicatesStrategy.INCLUDE
     failOnError = true
 
     def outputType = "baseline" == project.findProperty("jmhTarget")  ? "jmhBaseline" : "jmh"
     resultFormat = "text"
-    resultsFile = project.file("${project.buildDir}/reports/${outputType}/result.${resultFormat}")
+    resultsFile = layout.buildDirectory.file("reports/${outputType}/result.text").get().asFile
 }
 
 dependencies {
@@ -25,8 +28,6 @@ dependencies {
             jmh "io.projectreactor.tools:blockhound:${compatibleVersion}"
             break
         default:
-            jmh project(path: ":agent", configuration: 'shadow')
+            jmh project(":agent")
     }
-
-    jmh "org.openjdk.jmh:jmh-generator-annprocess:${jmh.jmhVersion}"
 }

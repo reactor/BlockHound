@@ -1,11 +1,10 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'com.gradleup.shadow' version '9.4.0'
     id "java"
     id "maven-publish"
     id "signing"
-    id "org.unbroken-dome.test-sets" version "4.0.0"
     id 'me.champeau.gradle.japicmp' version '0.4.6' apply false
-    id 'de.undercouch.download' version '5.7.0' apply false    
+    id 'de.undercouch.download' version '5.7.0' apply false
 }
 
 import me.champeau.gradle.japicmp.JapicmpTask
@@ -15,14 +14,35 @@ apply plugin: 'de.undercouch.download'
 description = "BlockHound Java Agent"
 ext.detailedDescription = "Java agent to detect blocking calls from non-blocking threads."
 
-testSets {
+sourceSets {
     jarFileTest
 }
 
-sourceCompatibility = targetCompatibility = 8
+configurations {
+    jarFileTestImplementation.extendsFrom(testImplementation)
+    jarFileTestRuntimeOnly.extendsFrom(testRuntimeOnly)
+}
+
+task jarFileTest(type: Test) {
+    testClassesDirs = sourceSets.jarFileTest.output.classesDirs
+    classpath = sourceSets.jarFileTest.runtimeClasspath
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+compileJava {
+    options.release = 8
+}
+
+jar {
+    archiveClassifier.set('original')
+}
 
 shadowJar {
-    classifier = null
+    archiveClassifier.set('')
 
     from("${rootDir}/docs/src/docs/dist") {
         include "LICENSE"
@@ -46,18 +66,29 @@ shadowJar {
 
     // TODO discuss with ByteBuddy folks how to shade it
     exclude 'win32-x86*/**'
+
+    enableAutoRelocation = true
+    relocationPrefix = "reactor.blockhound.shaded"
 }
 
 project.tasks.build.dependsOn(shadowJar)
 
-task relocateShadowJar(type: com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation) {
-    target = tasks.shadowJar
-    prefix = "reactor.blockhound.shaded"
+configurations {
+    apiElements {
+        outgoing {
+            artifacts.clear()
+            artifact(shadowJar)
+        }
+    }
+    runtimeElements {
+        outgoing {
+            artifacts.clear()
+            artifact(shadowJar)
+        }
+    }
 }
 
-tasks.shadowJar.dependsOn tasks.relocateShadowJar
-
-project.tasks.jarFileTest.configure {
+jarFileTest {
     systemProperty("jarFile", shadowJar.outputs.files.singleFile)
     dependsOn(shadowJar)
 }
@@ -110,7 +141,7 @@ publishing {
             artifact sourcesJar
             artifact javadocJar
 
-            artifactId 'blockhound'
+            artifactId = 'blockhound'
         }
     }
 }
@@ -134,7 +165,7 @@ task downloadBaseline(type: Download) {
 	onlyIfNewer true
 	compress true
 	src "${repositories.mavenCentral().url}io/projectreactor/tools/blockhound/$compatibleVersion/blockhound-${compatibleVersion}.jar"
-	dest "${buildDir}/baselineLibs/blockhound-${compatibleVersion}.jar"
+	dest layout.buildDirectory.file("baselineLibs/blockhound-${compatibleVersion}.jar").get().asFile
 }
 
 def japicmpReport = tasks.register('japicmpReport') {
@@ -142,7 +173,7 @@ def japicmpReport = tasks.register('japicmpReport') {
 		japicmp.state.failure != null
 	}
 	doLast {
-		def reportFile = file("${project.buildDir}/reports/japi.txt")
+		def reportFile = layout.buildDirectory.file("reports/japi.txt").get().asFile
 		if (reportFile.exists()) {
 			println "\n **********************************"
 			println " * /!\\ API compatibility failures *"
@@ -164,7 +195,7 @@ task japicmp(type: JapicmpTask) {
 	dependsOn(shadowJar)
 	onlyIf { "$compatibleVersion" != "SKIP" }
 
-	oldClasspath.from(files("${buildDir}/baselineLibs/blockhound-${compatibleVersion}.jar"))
+	oldClasspath.from(files(layout.buildDirectory.file("baselineLibs/blockhound-${compatibleVersion}.jar").get().asFile))
 	newClasspath.from(files(jar.archiveFile))
 	// these onlyXxx parameters result in a report that is slightly too noisy, but better than
 	// onlyBinaryIncompatibleModified = true which masks source-incompatible-only changes
@@ -172,7 +203,7 @@ task japicmp(type: JapicmpTask) {
 	onlyModified = true
 	failOnModification = true
 	failOnSourceIncompatibility = true
-	txtOutputFile = file("${project.buildDir}/reports/japi.txt")
+	txtOutputFile = layout.buildDirectory.file("reports/japi.txt").get().asFile
 	ignoreMissingClasses = true
 	includeSynthetic = true
 
