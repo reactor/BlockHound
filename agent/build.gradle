@@ -57,6 +57,8 @@ shadowJar {
         attributes('Premain-Class': 'reactor.blockhound.BlockHound')
     }
 
+    addMultiReleaseAttribute = false
+
     exclude 'META-INF/versions/**'
     exclude 'META-INF/NOTICE'
 	exclude 'META-INF/LICENSE'
