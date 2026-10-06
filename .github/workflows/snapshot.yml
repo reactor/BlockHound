@@ -22,7 +22,13 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+      - name: Configure Gradle properties
+        run: |
+          mkdir -p ${GRADLE_USER_HOME:-$HOME/.gradle}
+          echo 'systemProp.user.name=spring-builds+github' >> ${GRADLE_USER_HOME:-$HOME/.gradle}/gradle.properties
       - name: Run tests and javadoc
+        env:
+          DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
         run: ./gradlew check javadoc
   publishSnapshot:
     runs-on: ubuntu-22.04
@@ -42,9 +48,14 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+      - name: Configure Gradle properties
+        run: |
+          mkdir -p ${GRADLE_USER_HOME:-$HOME/.gradle}
+          echo 'systemProp.user.name=spring-builds+github' >> ${GRADLE_USER_HOME:-$HOME/.gradle}/gradle.properties
       - name: Publish Snapshot
         run: ./gradlew --no-daemon -Pversion=$BLOCKHOUND_VERSION publish
         env:
+          DEVELOCITY_ACCESS_KEY: ${{ secrets.DEVELOCITY_ACCESS_KEY }}
           GRADLE_PUBLISH_REPO_URL: https://repo.spring.io/libs-snapshot-local/
           GRADLE_PUBLISH_MAVEN_USER: ${{secrets.ARTIFACTORY_USERNAME}}
           GRADLE_PUBLISH_MAVEN_PASSWORD: ${{secrets.ARTIFACTORY_PASSWORD}}
