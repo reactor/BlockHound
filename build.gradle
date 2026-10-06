@@ -11,11 +11,21 @@ subprojects {
 
     repositories {
         mavenCentral()
+        if (System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_URL") != null) {
+            maven {
+                name = "Release Train"
+                url = System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_URL")
+                credentials {
+                    username = System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_USERNAME")
+                    password = System.getenv("RELEASE_TRAIN_MAVEN_REPOSITORY_PASSWORD")
+                }
+            }
+        }
     }
 
     tasks.withType(Test).configureEach {
         javaLauncher = javaToolchains.launcherFor {
-            languageVersion = JavaLanguageVersion.of(13)
+            languageVersion = JavaLanguageVersion.of((findProperty('testToolchainVersion') ?: 13) as int)
         }
         jvmArgs += [
                 "-XX:+AllowRedefinitionToAddDeleteMethods"
@@ -31,6 +41,12 @@ subprojects {
                     credentials {
                         username = System.getenv('GRADLE_PUBLISH_MAVEN_USER')
                         password = System.getenv('GRADLE_PUBLISH_MAVEN_PASSWORD')
+                    }
+                }
+                if (project.hasProperty("deploymentRepository")) {
+                    maven {
+                        name = 'Deployment'
+                        url = project.property("deploymentRepository")
                     }
                 }
             }
