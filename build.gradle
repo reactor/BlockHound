@@ -1,10 +1,29 @@
+plugins {
+    id 'com.jfrog.artifactory' version '6.0.4' apply false
+}
+
+apply from: "$rootDir/gradle/artifactory.gradle"
+
 subprojects {
     apply from: "$rootDir/gradle/publishing.gradle"
 
     group = "io.projectreactor.tools"
 
     repositories {
-        mavenCentral()
+        // On CI use only USW1 (proxies Maven Central) to avoid 429 from Maven Central
+        if (System.getenv("GITHUB_ACTION") != null && System.getenv("GITHUB_ACTOR") != "dependabot[bot]") {
+            maven {
+                name = "usw1-spring-maven-virtual"
+                url = "https://usw1.packages.broadcom.com/artifactory/spring-maven-virtual"
+                credentials {
+                    username = System.getenv("COMMERCIAL_REPO_USERNAME")
+                    password = System.getenv("COMMERCIAL_REPO_PASSWORD")
+                }
+            }
+        }
+        else {
+            mavenCentral()
+        }
     }
 
     tasks.withType(Test).configureEach {
@@ -16,26 +35,6 @@ subprojects {
         ]
     }
 
-
-    plugins.withType(SigningPlugin) {
-        //skipping if not .RELEASE. Note the task graph is still being evaluated here.
-        //This works because the version is only defined by CI scripts, and only the release one should use .RELEASE suffix
-        def shouldSign = version.toString().endsWith(".RELEASE")
-        project.signing {
-            required = { shouldSign }
-
-            //skip the configuration entirely if !shouldSign. the task shouldn't even be available
-            if (shouldSign) {
-                def signingKey = System.getenv('GRADLE_SIGNING_KEY')
-                def signingPassword = System.getenv('GRADLE_SIGNING_PASSWORD')
-                useInMemoryPgpKeys(signingKey, signingPassword)
-
-                afterEvaluate {
-                    sign publishing.publications.mavenJava
-                }
-            }
-        }
-    }
 
     plugins.withType(MavenPublishPlugin) {
         project.publishing {

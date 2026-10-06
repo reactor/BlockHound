@@ -1,0 +1,47 @@
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+
+// Publishes to the commercial Artifactory together with the build info.
+// Only active when the Artifactory credentials are provided (see .github/workflows/snapshot.yml)
+if (rootProject.hasProperty("artifactory_publish_password")) {
+    def buildNumber = rootProject.findProperty("buildNumber") ?: System.getenv("GITHUB_RUN_NUMBER") ?:
+            "${rootProject.version}-${DateTimeFormatter.ofPattern("yyyyMMdd@HHmmss").withZone(ZoneOffset.UTC).format(Instant.now())}"
+
+    configure(rootProject) { p ->
+        apply plugin: "com.jfrog.artifactory"
+
+        artifactory {
+            contextUrl = p.findProperty("artifactory_publish_contextUrl")
+            publish {
+                repository {
+                    repoKey = p.findProperty("artifactory_publish_repoKey")
+                    username = p.findProperty("artifactory_publish_username")
+                    password = p.findProperty("artifactory_publish_password")
+                }
+            }
+            clientConfig.includeEnvVars = false
+            buildInfo {
+                setBuildName('blockhound-commercial-' + (p.version.toString().endsWith('-SNAPSHOT') ? '1.0.x-internal' : p.version))
+                setBuildNumber(buildNumber.toString())
+                setProject('spring')
+                if (System.getenv("GITHUB_ACTIONS") == "true") {
+                    setBuildUrl(System.getenv("GITHUB_SERVER_URL") + "/" + System.getenv("GITHUB_REPOSITORY") + "/actions/runs/" + System.getenv("GITHUB_RUN_ID"))
+                    setVcsRevision(System.getenv("GITHUB_SHA"))
+                }
+            }
+        }
+    }
+
+    subprojects { sp ->
+        sp.plugins.withType(MavenPublishPlugin) {
+            sp.pluginManager.apply("com.jfrog.artifactory")
+
+            sp.afterEvaluate {
+                sp.artifactoryPublish {
+                    publications(sp.publishing.publications.mavenJava)
+                }
+            }
+        }
+    }
+}
