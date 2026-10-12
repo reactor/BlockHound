@@ -14,6 +14,6 @@ jobs:
       contents: write
     runs-on: ubuntu-22.04
     steps:
-      - uses: release-drafter/release-drafter@72967cdc98ddd3160f1fc3dff619de365e137dd0
+      - uses: release-drafter/release-drafter@978bb0b30c5ee8cdd332ced253758157150d43f0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
