@@ -1,0 +1,7 @@
+name: Test Release
+runs:
+  using: composite
+  steps:
+    - name: Test Release
+      shell: bash
+      run:  ./gradlew -PtestToolchainVersion=17 check -x :example:test -x :example:testReactor3_3_x
